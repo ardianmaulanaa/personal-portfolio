@@ -1,26 +1,153 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f7f1e3;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(1deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(14px) rotate(-1deg);
+  }
+}
+
+@keyframes slideRight {
+  0% {
+    transform: translateX(-30px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(30px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-30px);
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulseBox {
+  0%, 100% {
+    box-shadow: 8px 8px 0px #18181b;
+  }
+  50% {
+    box-shadow: 14px 14px 0px #18181b;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+.animate-slide-right {
+  animation: slideRight 7s ease-in-out infinite;
+}
+
+.animate-pulse-box {
+  animation: pulseBox 3s ease-in-out infinite;
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s ease-out both;
+}
+
+@keyframes marqueeLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-left {
+  animation: marqueeLeft 18s linear infinite;
+}
+
+@keyframes marqueeLeft {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-left {
+  animation: marqueeLeft 22s linear infinite;
+}
+
+.animate-marquee-left:hover {
+  animation-play-state: paused;
+}
+
+/* ── Scroll Fade-In ── */
+.scroll-fade {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1.4s ease, transform 1.4s ease;
+}
+
+.scroll-fade.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Project Cards Stagger ── */
+.project-card {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+
+.project-card.is-visible:nth-child(1) { transition-delay: 0s; }
+.project-card.is-visible:nth-child(2) { transition-delay: 0.3s; }
+.project-card.is-visible:nth-child(3) { transition-delay: 0.6s; }
+
+.project-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.focus-panel-main {
+  clip-path: polygon(0 0, 92% 0, 100% 18%, 100% 100%, 8% 100%, 0 82%);
+}
+
+.focus-panel-left {
+  clip-path: polygon(0 0, 88% 0, 100% 28%, 92% 100%, 0 100%);
+}
+
+.focus-panel-right {
+  clip-path: polygon(10% 0, 100% 0, 100% 78%, 88% 100%, 0 100%, 0 22%);
 }
