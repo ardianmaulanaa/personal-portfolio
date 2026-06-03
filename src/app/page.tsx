@@ -182,28 +182,33 @@ const MOBILE_MENU_ITEMS: NavItem[] = [
 ];
 
 function SplitText({ text }: { text: string }) {
-  let charIndex = 0;
+  const words = text.split(" ");
 
   return (
     <span className="split-text" aria-label={text}>
-      {text.split(" ").map((word, wordIndex) => (
-        <span key={`${word}-${wordIndex}`} className="split-word">
-          {word.split("").map((char) => {
-            const currentIndex = charIndex;
-            charIndex += 1;
+      {words.map((word, wordIndex) => {
+        const previousLength = words
+          .slice(0, wordIndex)
+          .reduce((total, currentWord) => total + currentWord.length, 0);
 
-            return (
-              <span
-                key={`${char}-${wordIndex}-${currentIndex}`}
-                className="split-char"
-                style={{ animationDelay: `${currentIndex * 0.045}s` }}
-              >
-                {char}
-              </span>
-            );
-          })}
-        </span>
-      ))}
+        return (
+          <span key={`${word}-${wordIndex}`} className="split-word">
+            {word.split("").map((char, charIndex) => {
+              const currentIndex = previousLength + charIndex;
+
+              return (
+                <span
+                  key={`${char}-${wordIndex}-${charIndex}`}
+                  className="split-char"
+                  style={{ animationDelay: `${currentIndex * 0.045}s` }}
+                >
+                  {char}
+                </span>
+              );
+            })}
+          </span>
+        );
+      })}
     </span>
   );
 }
