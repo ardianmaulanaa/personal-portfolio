@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Lenis from "lenis";
 
 import {
   Home,
@@ -25,6 +26,15 @@ interface ExperienceItem {
   role: string;
   date: string;
   text: string;
+  images?: string[];
+  imageAlt?: string;
+}
+
+interface CertificateItem {
+  title: string;
+  image: string;
+  imageAlt: string;
+  label: string;
 }
 
 interface NavItem {
@@ -37,14 +47,22 @@ const SKILLS: string[] = [
   "CSS",
   "JavaScript",
   "TypeScript",
-  "Next.js",
   "React",
+  "Next.js",
   "Node.js",
+  "Express.js",
   "Golang",
   "Python",
   "Java",
+  "Java Servlet",
+  "C++",
   "PostgreSQL",
-  "Git & GitHub",
+  "MySQL",
+  "MongoDB",
+  "Prisma",
+  "REST API",
+  "CRUD Flow",
+  "GitHub",
 ];
 
 const APPROACH: ApproachItem[] = [
@@ -74,6 +92,22 @@ const SERVICES: Array<[string, string]> = [
   ["Learning Lab", "Documenting progress, practical notes, and simple experiments for campus tasks."],
 ];
 
+
+const CERTIFICATES: CertificateItem[] = [
+  {
+    title: "Web Development Project-Based Learning",
+    image: "/img/certificates/1.jpg",
+    imageAlt: "Web development certificate",
+    label: "WEB DEVELOPMENT",
+  },
+  {
+    title: "Computer Vision Exploration",
+    image: "/img/certificates/3.png",
+    imageAlt: "Computer vision certificate",
+    label: "COMPUTER VISION",
+  },
+];
+
 const EXPERIENCES: ExperienceItem[] = [
   {
     place: "Central Computer Improvement",
@@ -92,25 +126,35 @@ const EXPERIENCES: ExperienceItem[] = [
     role: "System Analyst",
     date: "Jul 2025 - Sep 2025",
     text: "Worked on EchoMarket, a digital platform project for buying and selling unused or second-hand items. Focused on system analysis, project flow, database structure, and feature planning.",
+    images: [
+    "/img/ASE/1.jpeg",
+    "/img/ASE/3-s.jpg",
+    "/img/ASE/2-s.PNG"
+    ],
+    imageAlt: "Multimedia Laboratory activity",
   },
   {
     place: "Multimedia Laboratory",
     role: "Programming Division",
     date: "Nov 2024 - Dec 2025",
     text: "Learning and exploring machine learning, Roboflow, data processing, and practical technology implementation through laboratory activities.",
+    images: [
+    "/img/multimedia/1.JPG",
+    "/img/multimedia/2.jpeg",
+    "/img/multimedia/3.jpeg",
+    ],
+    imageAlt: "Multimedia Laboratory activity",
   },
   {
     place: "Informatics Student Association",
     role: "Publication and Documentation Staff",
     date: "Nov 2024 - Feb 2025",
     text: "Contributed to publication and documentation activities, including event documentation, photography, content preparation, and supporting organizational media needs.",
-  },
-  {
-    place: "Informatics Student",
-    role: "Software Development Learner",
-    date: "2024 - Present",
-    text: "Learning programming fundamentals, web development, database, software engineering, and practical project implementation.",
-  },
+    images: [
+    "/img/PPUH/1.jpeg",
+    ],
+    imageAlt: "Multimedia Laboratory activity",
+  }
 ];
 
 const NAV_ITEMS: NavItem[] = [
@@ -118,6 +162,19 @@ const NAV_ITEMS: NavItem[] = [
   { href: "#approach", label: "Approach" },
   { href: "#portfolio", label: "Portfolio" },
   { href: "#about", label: "About" },
+  { href: "#certificates", label: "Certificates" },
+  { href: "#services", label: "Services" },
+  { href: "#stats", label: "Stats" },
+  { href: "#experience", label: "Experience" },
+  { href: "#contact", label: "Contact" },
+];
+
+const MOBILE_MENU_ITEMS: NavItem[] = [
+  { href: "#home", label: "Home" },
+  { href: "#approach", label: "Main Focus" },
+  { href: "#portfolio", label: "Portfolio" },
+  { href: "#about", label: "About" },
+  { href: "#certificates", label: "Certificates" },
   { href: "#services", label: "Services" },
   { href: "#stats", label: "Stats" },
   { href: "#experience", label: "Experience" },
@@ -200,18 +257,97 @@ function SideIcon({ label }: { label: string }) {
   if (label === "Approach") return <Workflow {...iconProps} />;
   if (label === "Portfolio") return <BriefcaseBusiness {...iconProps} />;
   if (label === "About") return <UserRound {...iconProps} />;
+  if (label === "Certificates") return <GraduationCap {...iconProps} />;
   if (label === "Services") return <Code2 {...iconProps} />;
   if (label === "Stats") return <BarChart3 {...iconProps} />;
   if (label === "Experience") return <GraduationCap {...iconProps} />;
   return <Mail {...iconProps} />;
 }
 
-export default function HomePage() {
-  const duplicatedSkills = useMemo(() => [...SKILLS, ...SKILLS], []);
+function CustomCursor() {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
+    const moveCursor = (e: MouseEvent) => {
+      setPosition({
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
+
+    const hoverTargets = document.querySelectorAll("a, button, .nav-dots");
+
+    const handleMouseEnter = () => setIsHovering(true);
+    const handleMouseLeave = () => setIsHovering(false);
+
+    window.addEventListener("mousemove", moveCursor);
+
+    hoverTargets.forEach((target) => {
+      target.addEventListener("mouseenter", handleMouseEnter);
+      target.addEventListener("mouseleave", handleMouseLeave);
+    });
+
+    return () => {
+      window.removeEventListener("mousemove", moveCursor);
+
+      hoverTargets.forEach((target) => {
+        target.removeEventListener("mouseenter", handleMouseEnter);
+        target.removeEventListener("mouseleave", handleMouseLeave);
+      });
+    };
+  }, []);
+
+  return (
+    <>
+      <div
+        className="cursor-dot"
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+      />
+
+      <div
+        className={`cursor-circle ${isHovering ? "is-hovering" : ""}`}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+        }}
+      />
+    </>
+  );
+}
+
+export default function HomePage() {
+  const duplicatedSkills = useMemo(() => [...SKILLS, ...SKILLS], []);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeExperienceImage, setActiveExperienceImage] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveExperienceImage((prev) => (prev + 1) % 3);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1,
+      wheelMultiplier: 0.55,
+      touchMultiplier: 1.1,
+      smoothWheel: true,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
     const targets = document.querySelectorAll(
-      ".scroll-fade, .phase-card, .project-row, .service-row, .experience-row, .stat-card"
+      ".scroll-fade, .phase-card, .project-row, .service-row, .education-card, .certificate-card, .experience-row, .stat-card"
     );
 
     const observer = new IntersectionObserver(
@@ -227,11 +363,15 @@ export default function HomePage() {
 
     targets.forEach((target) => observer.observe(target));
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      lenis.destroy();
+    };
   }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px]">
+      <CustomCursor />
       <AnimatedBackground />
 
       <aside className="side-nav">
@@ -241,7 +381,7 @@ export default function HomePage() {
         </a>
 
         <div className="side-links">
-          {NAV_ITEMS.slice(1, 7).map((item) => (
+          {NAV_ITEMS.slice(1, 8).map((item) => (
             <a key={item.href} href={item.href} title={item.label} aria-label={item.label}>
               <SideIcon label={item.label} />
             </a>
@@ -257,6 +397,19 @@ export default function HomePage() {
         <a href="#home" className="font-black tracking-[0.25em]">
           ARDN<span className="text-orange-500">.</span>
         </a>
+
+        <button
+          type="button"
+          className={`nav-dots ${menuOpen ? "is-active" : ""}`}
+          aria-label="Toggle navigation menu"
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
         <a
           href="#contact"
           className="rounded-full border border-white/20 px-4 py-2 text-xs font-black uppercase tracking-[0.2em]"
@@ -264,6 +417,26 @@ export default function HomePage() {
           Contact
         </a>
       </nav>
+
+      <div className={`fullscreen-menu ${menuOpen ? "is-open" : ""}`}>
+        <div className="fullscreen-menu-top">
+          <span>LOCAL / INDONESIA</span>
+          <span>PORTFOLIO MENU</span>
+        </div>
+
+        <div className="fullscreen-menu-links">
+          {MOBILE_MENU_ITEMS.map((item) => (
+            <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+              {item.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="fullscreen-menu-bottom">
+          <span>MUHAMMAD ARDIAN MAULANA</span>
+          <span>WEB • AI • CYBER</span>
+        </div>
+      </div>
 
       <section id="home" className="hero-section">
         <div className="hero-topline scroll-fade">
@@ -305,7 +478,7 @@ export default function HomePage() {
 
             <div className="profile-card profile-card-two">
               <span>Focus</span>
-              <b>Backend • Web • AI</b>
+              <b>Fullstack • AI • Cyber</b>
             </div>
           </div>
         </div>
@@ -317,8 +490,6 @@ export default function HomePage() {
           </p>
 
           <div className="hero-role">
-            <span>Backend Developer</span>
-            <span>+</span>
             <span>Web Developer</span>
           </div>
         </div>
@@ -355,17 +526,21 @@ export default function HomePage() {
 
             <article className="portfolio-card-work scroll-fade">
               <div className="portfolio-image large">
-                <img src="/greenmarket-preview.png" alt="GreenMarket preview" />
+                <Image
+                  src="/img/greenmarket/1.png"
+                  alt="GreenMarket preview"
+                  width={800}
+                  height={500}
+                />
               </div>
 
               <div className="portfolio-work-meta">
                 <div>
                   <h3>GreenMarket</h3>
-                  <p>PORTFOLIO</p>
+                  <p>MARKETPLACE</p>
                 </div>
 
                 <a href="#" aria-label="Open GreenMarket">
-                  →
                 </a>
               </div>
             </article>
@@ -382,17 +557,22 @@ export default function HomePage() {
 
             <article className="portfolio-card-work portfolio-card-lower scroll-fade">
               <div className="portfolio-image small">
-                <img src="/procurement-preview.png" alt="Procurement Dashboard preview" />
+                <Image
+                  src="/img/multimedia/4.JPG"
+                  alt="GreenMarket preview"
+                  width={800}
+                  height={500}
+                />
               </div>
 
               <div className="portfolio-work-meta">
                 <div>
-                  <h3>Health Procurement</h3>
-                  <p>DASHBOARD WEBSITE</p>
+                  <h3>E Tilang - Detect Wrong Way</h3>
+                  <p>COMPUTER VISION</p>
                 </div>
 
-                <a href="#" aria-label="Open Procurement Dashboard">
-                  →
+                <a href="#" aria-label="E-Tilang">
+               
                 </a>
               </div>
             </article>
@@ -419,17 +599,93 @@ export default function HomePage() {
           </div>
 
           <div className="about-image scroll-fade">
-            <img src="/profile.png" alt="Ardian profile" />
+            <Image
+                src="/profile/ProfilePict2.JPG"
+                alt="Muhammad Ardian Maulana"
+                width={400}
+                height={400}
+                className="profile-img"
+                priority
+              />
             <div>
               <span>Currently Learning</span>
-              <b>Next.js + Tailwind CSS</b>
+              <b>Backend Development + AI Integration</b>
             </div>
           </div>
         </div>
       </section>
 
+
+      <section id="certificates" className="section-block education-section text-cream">
+        <SectionTitle number="04" eyebrow="Certificates" title="Certificates" side="Learning Proof" />
+
+        <div className="certificate-showcase">
+          <div className="certificate-showcase-left">
+            <div className="education-label scroll-fade">
+              <span>Certificates</span>
+              <p>Learning proof, training activities, and project-based portfolio experience.</p>
+            </div>
+
+            <article className="certificate-portfolio-card scroll-fade">
+              <div className="certificate-preview large">
+                <Image
+                  src={CERTIFICATES[0].image}
+                  alt={CERTIFICATES[0].imageAlt}
+                  width={900}
+                  height={620}
+                />
+              </div>
+
+              <div className="certificate-meta">
+                <div>
+                  <h3>{CERTIFICATES[0].title}</h3>
+                  <p>{CERTIFICATES[0].label}</p>
+                </div>
+
+                <span className="certificate-arrow" aria-hidden="true">
+                  
+                </span>
+              </div>
+            </article>
+          </div>
+
+          <div className="certificate-showcase-right">
+            <div className="certificate-note scroll-fade">
+              <span className="certificate-dot" />
+              <p>
+                A collection of learning proof, training results, and project-based achievements.
+              </p>
+            </div>
+
+            {CERTIFICATES.slice(1).map((item) => (
+              <article key={item.title} className="certificate-portfolio-card scroll-fade">
+                <div className="certificate-preview small">
+                  <Image
+                    src={item.image}
+                    alt={item.imageAlt}
+                    width={900}
+                    height={620}
+                  />
+                </div>
+
+                <div className="certificate-meta">
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.label}</p>
+                  </div>
+
+                  <span className="certificate-arrow" aria-hidden="true">
+                
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="services" className="section-block bg-orange text-dark">
-        <SectionTitle number="04" eyebrow="Services" title="What I Can Build" side="Fast Iteration" />
+        <SectionTitle number="05" eyebrow="Services" title="What I Can Build" side="Fast Iteration" />
 
         <div className="service-list">
           {SERVICES.map(([title, text], index) => (
@@ -451,13 +707,13 @@ export default function HomePage() {
       </section>
 
       <section id="stats" className="section-block bg-dark text-cream">
-        <SectionTitle number="05" eyebrow="Stats" title="Fun Facts" side="Growing" />
+        <SectionTitle number="06" eyebrow="Stats" title="Fun Facts" side="Growing" />
 
         <div className="stats-grid">
           {[
-            ["10+", "Tech Stack Learned"],
-            ["3+", "Main Project Areas"],
-            ["100%", "Learning Mode"],
+            ["20", "Tools & Technologies"],
+            ["3", "Core Interests"],
+            ["100%", "Learning by Building"],
             ["24/7", "Curiosity"],
           ].map(([value, label]) => (
             <article key={label} className="stat-card">
@@ -469,18 +725,62 @@ export default function HomePage() {
       </section>
 
       <section id="experience" className="section-block bg-cream text-dark">
-        <SectionTitle number="06" eyebrow="Experience" title="Learning Journey" side="Present" />
+        <SectionTitle number="07" eyebrow="Experience" title="Learning Journey" side="Present" />
 
         <div className="experience-list">
           {EXPERIENCES.map((item) => (
-            <article key={item.place} className="experience-row">
+            <article
+              key={item.place}
+              className={`experience-row ${item.images ? "experience-row-with-image" : ""}`}
+            >
               <div>
                 <h3>{item.place}</h3>
                 <span>{item.role}</span>
               </div>
 
               <time>{item.date}</time>
-              <p>{item.text}</p>
+
+              <div className="experience-detail">
+                <p>{item.text}</p>
+
+                {item.images ? (
+                  <div className="experience-slider">
+                    <div
+                      className="experience-track"
+                      style={{
+                        transform: `translateX(-${
+                          (activeExperienceImage % item.images.length) * 100
+                        }%)`,
+                      }}
+                    >
+                      {item.images.map((image) => (
+                        <Image
+                          key={image}
+                          src={image}
+                          alt={item.imageAlt ?? item.place}
+                          width={720}
+                          height={450}
+                          className="experience-slide"
+                        />
+                      ))}
+                    </div>
+
+                    <div className="experience-dots">
+                      {item.images.map((_, dotIndex) => (
+                        <button
+                          key={dotIndex}
+                          type="button"
+                          className={`experience-dot ${
+                            dotIndex === activeExperienceImage % item.images.length ? "is-active" : ""
+                          }`}
+                          aria-label={`Show image ${dotIndex + 1}`}
+                          onClick={() => setActiveExperienceImage(dotIndex)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </article>
           ))}
         </div>
@@ -488,7 +788,7 @@ export default function HomePage() {
 
       <section id="contact" className="contact-section">
         <div className="contact-card scroll-fade">
-          <span>07 Contact</span>
+          <span>08 Contact</span>
           <h2>
             <SplitText text="Let's Build Something Useful." />
           </h2>
