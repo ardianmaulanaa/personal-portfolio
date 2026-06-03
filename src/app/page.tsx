@@ -128,8 +128,8 @@ const EXPERIENCES: ExperienceItem[] = [
     text: "Worked on EchoMarket, a digital platform project for buying and selling unused or second-hand items. Focused on system analysis, project flow, database structure, and feature planning.",
     images: [
     "/img/ASE/1.jpeg",
-    "/img/ASE/3-s.jpg",
-    "/img/ASE/2-fixed.PNG"
+    "/img/ASE/2.jpg",
+    "/img/ASE/3.PNG"
     ],
     imageAlt: "Multimedia Laboratory activity",
   },
