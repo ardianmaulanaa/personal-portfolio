@@ -728,61 +728,67 @@ export default function HomePage() {
         <SectionTitle number="07" eyebrow="Experience" title="Learning Journey" side="Present" />
 
         <div className="experience-list">
-          {EXPERIENCES.map((item) => (
-            <article
-              key={item.place}
-              className={`experience-row ${item.images ? "experience-row-with-image" : ""}`}
-            >
-              <div>
-                <h3>{item.place}</h3>
-                <span>{item.role}</span>
-              </div>
+          {EXPERIENCES.map((item) => {
+            const images = item.images ?? [];
+            const activeImageIndex =
+              images.length > 0 ? activeExperienceImage % images.length : 0;
 
-              <time>{item.date}</time>
+            return (
+              <article
+                key={item.place}
+                className={`experience-row ${
+                  images.length > 0 ? "experience-row-with-image" : ""
+                }`}
+              >
+                <div>
+                  <h3>{item.place}</h3>
+                  <span>{item.role}</span>
+                </div>
 
-              <div className="experience-detail">
-                <p>{item.text}</p>
+                <time>{item.date}</time>
 
-                {item.images ? (
-                  <div className="experience-slider">
-                    <div
-                      className="experience-track"
-                      style={{
-                        transform: `translateX(-${
-                          (activeExperienceImage % item.images.length) * 100
-                        }%)`,
-                      }}
-                    >
-                      {item.images.map((image) => (
-                        <Image
-                          key={image}
-                          src={image}
-                          alt={item.imageAlt ?? item.place}
-                          width={720}
-                          height={450}
-                          className="experience-slide"
-                        />
-                      ))}
+                <div className="experience-detail">
+                  <p>{item.text}</p>
+
+                  {images.length > 0 ? (
+                    <div className="experience-slider">
+                      <div
+                        className="experience-track"
+                        style={{
+                          transform: `translateX(-${activeImageIndex * 100}%)`,
+                        }}
+                      >
+                        {images.map((image) => (
+                          <Image
+                            key={image}
+                            src={image}
+                            alt={item.imageAlt ?? item.place}
+                            width={720}
+                            height={450}
+                            className="experience-slide"
+                          />
+                        ))}
+                      </div>
+
+                      <div className="experience-dots">
+                        {images.map((_, dotIndex) => (
+                          <button
+                            key={dotIndex}
+                            type="button"
+                            className={`experience-dot ${
+                              dotIndex === activeImageIndex ? "is-active" : ""
+                            }`}
+                            aria-label={`Show image ${dotIndex + 1}`}
+                            onClick={() => setActiveExperienceImage(dotIndex)}
+                          />
+                        ))}
+                      </div>
                     </div>
-
-                    <div className="experience-dots">
-                      {item.images.map((_, dotIndex) => (
-                        <button
-                          key={dotIndex}
-                          type="button"
-                          className={`experience-dot ${
-                            dotIndex === activeExperienceImage % item.images.length ? "is-active" : ""
-                          }`}
-                          aria-label={`Show image ${dotIndex + 1}`}
-                          onClick={() => setActiveExperienceImage(dotIndex)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </article>
-          ))}
+                  ) : null}
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
 
