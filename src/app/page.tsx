@@ -600,7 +600,7 @@ export default function HomePage() {
               My main interests are backend development, cybersecurity, and artificial intelligence.
               I aim to build applications that are not only visually appealing, but also supported by clean logic and a well-organized structure. 
             </p>
-            <a href="#contact">Download Resume</a>
+            <a href="/CV/CV-ARDIAN.pdf">Download Resume</a>
           </div>
 
           <div className="about-image scroll-fade">
