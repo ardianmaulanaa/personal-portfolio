@@ -129,7 +129,7 @@ const EXPERIENCES: ExperienceItem[] = [
     images: [
     "/img/ASE/1.jpeg",
     "/img/ASE/3-s.jpg",
-    "/img/ASE/2-s.PNG"
+    "/img/ASE/2-fixed.PNG"
     ],
     imageAlt: "Multimedia Laboratory activity",
   },
