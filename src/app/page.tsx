@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Lenis from "lenis";
+
+import OpeningIntro from "@/components/OpeningIntro";
 
 import {
   Home,
@@ -84,14 +86,31 @@ const APPROACH: ApproachItem[] = [
 ];
 
 const SERVICES: Array<[string, string]> = [
-  ["Frontend Development", "Responsive landing page, dashboard, portfolio, and admin interface."],
-  ["Backend Development", "API logic, CRUD flow, authentication concept, and database integration."],
-  ["Project Refactoring", "Cleaning structure, splitting components, and improving code readability."],
-  ["UI Enhancement", "Modern layout, section animation, color balance, and mobile responsive design."],
-  ["Database Flow", "Designing table relations, query logic, backup concept, and report structure."],
-  ["Learning Lab", "Documenting progress, practical notes, and simple experiments for campus tasks."],
+  [
+    "Frontend Development",
+    "Responsive landing page, dashboard, portfolio, and admin interface.",
+  ],
+  [
+    "Backend Development",
+    "API logic, CRUD flow, authentication concept, and database integration.",
+  ],
+  [
+    "Project Refactoring",
+    "Cleaning structure, splitting components, and improving code readability.",
+  ],
+  [
+    "UI Enhancement",
+    "Modern layout, section animation, color balance, and mobile responsive design.",
+  ],
+  [
+    "Database Flow",
+    "Designing table relations, query logic, backup concept, and report structure.",
+  ],
+  [
+    "Learning Lab",
+    "Documenting progress, practical notes, and simple experiments for campus tasks.",
+  ],
 ];
-
 
 const CERTIFICATES: CertificateItem[] = [
   {
@@ -126,11 +145,7 @@ const EXPERIENCES: ExperienceItem[] = [
     role: "System Analyst",
     date: "Jul 2025 - Sep 2025",
     text: "Worked on EchoMarket, a digital platform project for buying and selling unused or second-hand items. Focused on system analysis, project flow, database structure, and feature planning.",
-    images: [
-    "/img/ASE/1.jpeg",
-    "/img/ASE/2.jpg",
-    "/img/ASE/3.png"
-    ],
+    images: ["/img/ASE/1.jpeg", "/img/ASE/2.jpg", "/img/ASE/3.png"],
     imageAlt: "Multimedia Laboratory activity",
   },
   {
@@ -139,9 +154,9 @@ const EXPERIENCES: ExperienceItem[] = [
     date: "Nov 2024 - Dec 2025",
     text: "Learning and exploring machine learning, Roboflow, data processing, and practical technology implementation through laboratory activities.",
     images: [
-    "/img/multimedia/1.JPG",
-    "/img/multimedia/2.jpeg",
-    "/img/multimedia/3.jpeg",
+      "/img/multimedia/1.JPG",
+      "/img/multimedia/2.jpeg",
+      "/img/multimedia/3.jpeg",
     ],
     imageAlt: "Multimedia Laboratory activity",
   },
@@ -150,11 +165,9 @@ const EXPERIENCES: ExperienceItem[] = [
     role: "Publication and Documentation Staff",
     date: "Nov 2024 - Feb 2025",
     text: "Contributed to publication and documentation activities, including event documentation, photography, content preparation, and supporting organizational media needs.",
-    images: [
-    "/img/PPUH/1.jpeg",
-    ],
+    images: ["/img/PPUH/1.jpeg"],
     imageAlt: "Multimedia Laboratory activity",
-  }
+  },
 ];
 
 const NAV_ITEMS: NavItem[] = [
@@ -239,9 +252,13 @@ function SectionTitle({
   );
 }
 
-function AnimatedBackground() {
+function AnimatedBackground({ isReady }: { isReady: boolean }) {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div
+      className={`portfolio-opening-bg pointer-events-none fixed inset-0 z-0 overflow-hidden ${
+        isReady ? "is-ready" : ""
+      }`}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(249,115,22,0.16),transparent_32%),radial-gradient(circle_at_78%_26%,rgba(255,255,255,0.12),transparent_30%),radial-gradient(circle_at_50%_88%,rgba(249,115,22,0.12),transparent_36%)]" />
       <div className="noise-layer" />
       <div className="grid-layer" />
@@ -328,6 +345,11 @@ export default function HomePage() {
   const duplicatedSkills = useMemo(() => [...SKILLS, ...SKILLS], []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeExperienceImage, setActiveExperienceImage] = useState(0);
+  const [pageReady, setPageReady] = useState(false);
+
+  const handleIntroReveal = useCallback(() => {
+    setPageReady(true);
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveExperienceImage((prev) => (prev + 1) % 3);
@@ -337,6 +359,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (!pageReady) return;
+
     const lenis = new Lenis({
       duration: 1,
       wheelMultiplier: 0.55,
@@ -344,15 +368,17 @@ export default function HomePage() {
       smoothWheel: true,
     });
 
+    let animationFrame = 0;
+
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      animationFrame = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    animationFrame = requestAnimationFrame(raf);
 
     const targets = document.querySelectorAll(
-      ".scroll-fade, .phase-card, .project-row, .service-row, .education-card, .certificate-card, .experience-row, .stat-card"
+      ".scroll-fade, .phase-card, .project-row, .service-row, .education-card, .certificate-card, .experience-row, .stat-card",
     );
 
     const observer = new IntersectionObserver(
@@ -360,26 +386,33 @@ export default function HomePage() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
 
     targets.forEach((target) => observer.observe(target));
 
     return () => {
+      cancelAnimationFrame(animationFrame);
       observer.disconnect();
       lenis.destroy();
     };
-  }, []);
+  }, [pageReady]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px]">
-      <CustomCursor />
-      <AnimatedBackground />
+    <main
+      className={`portfolio-page relative min-h-screen overflow-hidden bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px] ${
+        pageReady ? "portfolio-page-ready" : ""
+      }`}
+    >
+      <OpeningIntro onRevealStart={handleIntroReveal} />
+      {pageReady ? <CustomCursor /> : null}
+      <AnimatedBackground isReady={pageReady} />
 
-      <aside className="side-nav">
+      <aside className={`side-nav intro-nav ${pageReady ? "is-ready" : ""}`}>
         <a href="#home" className="side-logo" aria-label="Home">
           <span>ARDN</span>
           <small>DEV</small>
@@ -387,7 +420,12 @@ export default function HomePage() {
 
         <div className="side-links">
           {NAV_ITEMS.slice(1, 8).map((item) => (
-            <a key={item.href} href={item.href} title={item.label} aria-label={item.label}>
+            <a
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              aria-label={item.label}
+            >
               <SideIcon label={item.label} />
             </a>
           ))}
@@ -398,7 +436,7 @@ export default function HomePage() {
         </a>
       </aside>
 
-      <nav className="mobile-nav">
+      <nav className={`mobile-nav intro-nav ${pageReady ? "is-ready" : ""}`}>
         <a href="#home" className="font-black tracking-[0.25em]">
           ARDN<span className="text-orange-500">.</span>
         </a>
@@ -431,7 +469,11 @@ export default function HomePage() {
 
         <div className="fullscreen-menu-links">
           {MOBILE_MENU_ITEMS.map((item) => (
-            <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+            >
               {item.label}
             </a>
           ))}
@@ -443,168 +485,187 @@ export default function HomePage() {
         </div>
       </div>
 
-      <section id="home" className="hero-section">
-        <div className="hero-topline scroll-fade">
-          <div>
-            <span>DEV /</span>
-            <span>PORTFOLIO</span>
-          </div>
-
-          <a href="#contact">Contact Now</a>
-        </div>
-
-        <div className="hero-grid">
-          <div className="scroll-fade">
-            <p className="hero-location">Based in Indonesia • Available Worldwide</p>
-            <h1 className="hero-title">
-              Muhammad
-              <span>Ardian</span>
-              Maulana
-            </h1>
-          </div>
-
-          <div className="hero-profile scroll-fade">
-            <div className="profile-glow" />
-            <div className="profile-ring">
-              <Image
-                src="/profile/ProfilePict.JPG"
-                alt="Muhammad Ardian Maulana"
-                width={400}
-                height={400}
-                className="profile-img"
-                priority
-              />
+      <div
+        className={`portfolio-content-reveal ${pageReady ? "is-ready" : ""}`}
+      >
+        <section id="home" className="hero-section">
+          <div className="hero-topline scroll-fade">
+            <div>
+              <span>DEV /</span>
+              <span>PORTFOLIO</span>
             </div>
 
-            <div className="profile-card profile-card-one">
-              <span>Digital Portfolio</span>
-              <b>2026</b>
-            </div>
-
-            <div className="profile-card profile-card-two">
-              <span>Focus</span>
-              <b>Fullstack • AI • Cyber</b>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-bottom scroll-fade">
-          <p>
-            Informatics student focused on building useful digital products, backend systems,
-            web applications, cybersecurity, and artificial intelligence.
-          </p>
-
-          <div className="hero-role">
-            <span>Web Developer</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="approach" className="section-block bg-cream text-dark">
-        <div className="main-focus-title">
-          <SectionTitle number="01" title="Main Focus" side="Web • AI • Cyber" />
-        </div>
-
-        <div className="phase-grid">
-          {APPROACH.map((item) => (
-            <article key={item.number} className="phase-card">
-              <span>{item.number}</span>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="portfolio" className="portfolio-section">
-        <div className="portfolio-top">
-          <span>02</span>
-          <span>PORTFOLIO</span>
-          <span>2026</span>
-        </div>
-
-        <div className="portfolio-layout">
-          <div className="portfolio-left">
-            <h2 className="portfolio-title scroll-fade">
-              <SplitText text="Latest Portfolio" />
-            </h2>
-
-            <article className="portfolio-card-work scroll-fade">
-              <div className="portfolio-image large">
-                <Image
-                  src="/img/greenmarket/1.png"
-                  alt="GreenMarket preview"
-                  width={800}
-                  height={500}
-                />
-              </div>
-
-              <div className="portfolio-work-meta">
-                <div>
-                  <h3>GreenMarket</h3>
-                  <p>MARKETPLACE</p>
-                </div>
-
-                <a href="#" aria-label="Open GreenMarket">
-                </a>
-              </div>
-            </article>
+            <a href="#contact">Contact Now</a>
           </div>
 
-          <div className="portfolio-right">
-            <div className="portfolio-desc scroll-fade">
-              <span className="portfolio-dot" />
-              <p>
-                My creative spirit comes alive in the digital realm. With clean code, modern layout,
-                and practical features.
+          <div className="hero-grid">
+            <div className="scroll-fade">
+              <p className="hero-location">
+                Based in Indonesia • Available Worldwide
               </p>
+              <h1 className="hero-title">
+                Muhammad
+                <span>Ardian</span>
+                Maulana
+              </h1>
             </div>
 
-            <article className="portfolio-card-work portfolio-card-lower scroll-fade">
-              <div className="portfolio-image small">
+            <div className="hero-profile scroll-fade">
+              <div className="profile-glow" />
+              <div className="profile-ring">
                 <Image
-                  src="/img/multimedia/4.JPG"
-                  alt="GreenMarket preview"
-                  width={800}
-                  height={500}
+                  src="/profile/ProfilePict.JPG"
+                  alt="Muhammad Ardian Maulana"
+                  width={400}
+                  height={400}
+                  className="profile-img"
+                  priority
                 />
               </div>
 
-              <div className="portfolio-work-meta">
-                <div>
-                  <h3>E Tilang - Detect Wrong Way</h3>
-                  <p>COMPUTER VISION</p>
+              <div className="profile-card profile-card-one">
+                <span>Digital Portfolio</span>
+                <b>2026</b>
+              </div>
+
+              <div className="profile-card profile-card-two">
+                <span>Focus</span>
+                <b>Fullstack • AI • Cyber</b>
+              </div>
+            </div>
+          </div>
+
+          <div className="hero-bottom scroll-fade">
+            <p>
+              Informatics student focused on building useful digital products,
+              backend systems, web applications, cybersecurity, and artificial
+              intelligence.
+            </p>
+
+            <div className="hero-role">
+              <span>Web Developer</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="approach" className="section-block bg-cream text-dark">
+          <div className="main-focus-title">
+            <SectionTitle
+              number="01"
+              title="Main Focus"
+              side="Web • AI • Cyber"
+            />
+          </div>
+
+          <div className="phase-grid">
+            {APPROACH.map((item) => (
+              <article key={item.number} className="phase-card">
+                <span>{item.number}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="portfolio" className="portfolio-section">
+          <div className="portfolio-top">
+            <span>02</span>
+            <span>PORTFOLIO</span>
+            <span>2026</span>
+          </div>
+
+          <div className="portfolio-layout">
+            <div className="portfolio-left">
+              <h2 className="portfolio-title scroll-fade">
+                <SplitText text="Latest Portfolio" />
+              </h2>
+
+              <article className="portfolio-card-work scroll-fade">
+                <div className="portfolio-image large">
+                  <Image
+                    src="/img/greenmarket/1.png"
+                    alt="GreenMarket preview"
+                    width={800}
+                    height={500}
+                  />
                 </div>
 
-                <a href="#" aria-label="E-Tilang">
-               
-                </a>
+                <div className="portfolio-work-meta">
+                  <div>
+                    <h3>GreenMarket</h3>
+                    <p>MARKETPLACE</p>
+                  </div>
+
+                  <a href="/projects/greenmarket" aria-label="Open GreenMarket">
+                    →
+                  </a>
+                </div>
+              </article>
+            </div>
+
+            <div className="portfolio-right">
+              <div className="portfolio-desc scroll-fade">
+                <span className="portfolio-dot" />
+                <p>
+                  My creative spirit comes alive in the digital realm. With
+                  clean code, modern layout, and practical features.
+                </p>
               </div>
-            </article>
+
+              <article className="portfolio-card-work portfolio-card-lower scroll-fade">
+                <div className="portfolio-image small">
+                  <Image
+                    src="/img/multimedia/4.JPG"
+                    alt="GreenMarket preview"
+                    width={800}
+                    height={500}
+                  />
+                </div>
+
+                <div className="portfolio-work-meta">
+                  <div>
+                    <h3>E Tilang - Detect Wrong Way</h3>
+                    <p>COMPUTER VISION</p>
+                  </div>
+
+                  <a href="/projects/E-tilang" aria-label="E-Tilang">
+                    →
+                  </a>
+                </div>
+              </article>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="about" className="section-block bg-cream text-dark">
-        <SectionTitle number="03" eyebrow="Who Am I" title="More About Ardian" side="Since Learning" />
+        <section id="about" className="section-block bg-cream text-dark">
+          <SectionTitle
+            number="03"
+            eyebrow="Who Am I"
+            title="More About Ardian"
+            side="Since Learning"
+          />
 
-        <div className="about-grid">
-          <div className="about-copy scroll-fade">
-            <h3>I build projects to understand how real software works.</h3>
-            <p>
-              I am an Informatics student who enjoys learning technology by building real projects.
-              I work with frontend, backend, databases, debugging, and code improvement to create
-              cleaner and easier-to-understand applications.
-            </p>
-            <p>
-              My main interests are backend development, cybersecurity, and artificial intelligence.
-              I aim to build applications that are not only visually appealing, but also supported by clean logic and a well-organized structure. 
-            </p>
-            <a href="/CV/CV-ARDIAN.pdf">Download Resume</a>
-          </div>
+          <div className="about-grid">
+            <div className="about-copy scroll-fade">
+              <h3>I build projects to understand how real software works.</h3>
+              <p>
+                I am an Informatics student who enjoys learning technology by
+                building real projects. I work with frontend, backend,
+                databases, debugging, and code improvement to create cleaner and
+                easier-to-understand applications.
+              </p>
+              <p>
+                My main interests are backend development, cybersecurity, and
+                artificial intelligence. I aim to build applications that are
+                not only visually appealing, but also supported by clean logic
+                and a well-organized structure.
+              </p>
+              <a href="/CV/CV-ARDIAN.pdf">Download Resume</a>
+            </div>
 
-          <div className="about-image scroll-fade">
-            <Image
+            <div className="about-image scroll-fade">
+              <Image
                 src="/profile/ProfilePict2.JPG"
                 alt="Muhammad Ardian Maulana"
                 width={400}
@@ -612,62 +673,40 @@ export default function HomePage() {
                 className="profile-img"
                 priority
               />
-            <div>
-              <span>Currently Learning</span>
-              <b>Backend Development + AI Integration</b>
+              <div>
+                <span>Currently Learning</span>
+                <b>Backend Development + AI Integration</b>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        <section
+          id="certificates"
+          className="section-block education-section text-cream"
+        >
+          <SectionTitle
+            number="04"
+            eyebrow="Certificates"
+            title="Certificates"
+            side="Learning Proof"
+          />
 
-      <section id="certificates" className="section-block education-section text-cream">
-        <SectionTitle number="04" eyebrow="Certificates" title="Certificates" side="Learning Proof" />
-
-        <div className="certificate-showcase">
-          <div className="certificate-showcase-left">
-            <div className="education-label scroll-fade">
-              <span>Certificates</span>
-              <p>Learning proof, training activities, and project-based portfolio experience.</p>
-            </div>
-
-            <article className="certificate-portfolio-card scroll-fade">
-              <div className="certificate-preview large">
-                <Image
-                  src={CERTIFICATES[0].image}
-                  alt={CERTIFICATES[0].imageAlt}
-                  width={900}
-                  height={620}
-                />
+          <div className="certificate-showcase">
+            <div className="certificate-showcase-left">
+              <div className="education-label scroll-fade">
+                <span>Certificates</span>
+                <p>
+                  Learning proof, training activities, and project-based
+                  portfolio experience.
+                </p>
               </div>
 
-              <div className="certificate-meta">
-                <div>
-                  <h3>{CERTIFICATES[0].title}</h3>
-                  <p>{CERTIFICATES[0].label}</p>
-                </div>
-
-                <span className="certificate-arrow" aria-hidden="true">
-                  
-                </span>
-              </div>
-            </article>
-          </div>
-
-          <div className="certificate-showcase-right">
-            <div className="certificate-note scroll-fade">
-              <span className="certificate-dot" />
-              <p>
-                A collection of learning proof, training results, and project-based achievements.
-              </p>
-            </div>
-
-            {CERTIFICATES.slice(1).map((item) => (
-              <article key={item.title} className="certificate-portfolio-card scroll-fade">
-                <div className="certificate-preview small">
+              <article className="certificate-portfolio-card scroll-fade">
+                <div className="certificate-preview large">
                   <Image
-                    src={item.image}
-                    alt={item.imageAlt}
+                    src={CERTIFICATES[0].image}
+                    alt={CERTIFICATES[0].imageAlt}
                     width={900}
                     height={620}
                   />
@@ -675,160 +714,216 @@ export default function HomePage() {
 
                 <div className="certificate-meta">
                   <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.label}</p>
+                    <h3>{CERTIFICATES[0].title}</h3>
+                    <p>{CERTIFICATES[0].label}</p>
                   </div>
 
-                  <span className="certificate-arrow" aria-hidden="true">
-                
-                  </span>
+                  <span className="certificate-arrow" aria-hidden="true"></span>
                 </div>
+              </article>
+            </div>
+
+            <div className="certificate-showcase-right">
+              <div className="certificate-note scroll-fade">
+                <span className="certificate-dot" />
+                <p>
+                  A collection of learning proof, training results, and
+                  project-based achievements.
+                </p>
+              </div>
+
+              {CERTIFICATES.slice(1).map((item) => (
+                <article
+                  key={item.title}
+                  className="certificate-portfolio-card scroll-fade"
+                >
+                  <div className="certificate-preview small">
+                    <Image
+                      src={item.image}
+                      alt={item.imageAlt}
+                      width={900}
+                      height={620}
+                    />
+                  </div>
+
+                  <div className="certificate-meta">
+                    <div>
+                      <h3>{item.title}</h3>
+                      <p>{item.label}</p>
+                    </div>
+
+                    <span
+                      className="certificate-arrow"
+                      aria-hidden="true"
+                    ></span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="services" className="section-block bg-orange text-dark">
+          <SectionTitle
+            number="05"
+            eyebrow="Services"
+            title="What I Can Build"
+            side="Fast Iteration"
+          />
+
+          <div className="service-list">
+            {SERVICES.map(([title, text], index) => (
+              <article key={title} className="service-row">
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{title}</h3>
+                <p>{text}</p>
               </article>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="services" className="section-block bg-orange text-dark">
-        <SectionTitle number="05" eyebrow="Services" title="What I Can Build" side="Fast Iteration" />
-
-        <div className="service-list">
-          {SERVICES.map(([title, text], index) => (
-            <article key={title} className="service-row">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="skill-strip" aria-label="Skills marquee">
-        <div className="marquee-track">
-          {duplicatedSkills.map((skill, index) => (
-            <span key={`${skill}-${index}`}>{skill}</span>
-          ))}
-        </div>
-      </section>
-
-      <section id="stats" className="section-block bg-dark text-cream">
-        <SectionTitle number="06" eyebrow="Stats" title="Fun Facts" side="Growing" />
-
-        <div className="stats-grid">
-          {[
-            ["20", "Tools & Technologies"],
-            ["3", "Core Interests"],
-            ["100%", "Learning by Building"],
-            ["24/7", "Curiosity"],
-          ].map(([value, label]) => (
-            <article key={label} className="stat-card">
-              <strong>{value}</strong>
-              <span>{label}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section id="experience" className="section-block bg-cream text-dark">
-        <SectionTitle number="07" eyebrow="Experience" title="Learning Journey" side="Present" />
-
-        <div className="experience-list">
-          {EXPERIENCES.map((item) => {
-            const images = item.images ?? [];
-            const activeImageIndex =
-              images.length > 0 ? activeExperienceImage % images.length : 0;
-
-            return (
-              <article
-                key={item.place}
-                className={`experience-row ${
-                  images.length > 0 ? "experience-row-with-image" : ""
-                }`}
-              >
-                <div>
-                  <h3>{item.place}</h3>
-                  <span>{item.role}</span>
-                </div>
-
-                <time>{item.date}</time>
-
-                <div className="experience-detail">
-                  <p>{item.text}</p>
-
-                  {images.length > 0 ? (
-                    <div className="experience-slider">
-                      <div
-                        className="experience-track"
-                        style={{
-                          transform: `translateX(-${activeImageIndex * 100}%)`,
-                        }}
-                      >
-                        {images.map((image) => (
-                          <Image
-                            key={image}
-                            src={image}
-                            alt={item.imageAlt ?? item.place}
-                            width={720}
-                            height={450}
-                            className="experience-slide"
-                          />
-                        ))}
-                      </div>
-
-                      <div className="experience-dots">
-                        {images.map((_, dotIndex) => (
-                          <button
-                            key={dotIndex}
-                            type="button"
-                            className={`experience-dot ${
-                              dotIndex === activeImageIndex ? "is-active" : ""
-                            }`}
-                            aria-label={`Show image ${dotIndex + 1}`}
-                            onClick={() => setActiveExperienceImage(dotIndex)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section id="contact" className="contact-section">
-        <div className="contact-card scroll-fade">
-          <span>08 Contact</span>
-          <h2>
-            <SplitText text="Let's Build Something Useful." />
-          </h2>
-          <p>
-            Interested to collaborate, discuss a project, or connect with me? Reach me through email,
-            GitHub, or LinkedIn.
-          </p>
-
-          <div>
-            <a href="mailto:ardianmaulana92251@gmail.com">Email Me</a>
-
-            <a href="https://github.com/ardianmaulanaa" target="_blank" rel="noreferrer">
-              GitHub
-            </a>
-
-            <a
-              href="https://www.linkedin.com/in/muhammad-ardian-maulana-92449b30a/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              LinkedIn
-            </a>
+        <section className="skill-strip" aria-label="Skills marquee">
+          <div className="marquee-track">
+            {duplicatedSkills.map((skill, index) => (
+              <span key={`${skill}-${index}`}>{skill}</span>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <footer className="site-footer">
-        © 2026 Muhammad Ardian Maulana. Portfolio inspired layout, modified for developer identity.
-      </footer>
+        <section id="stats" className="section-block bg-dark text-cream">
+          <SectionTitle
+            number="06"
+            eyebrow="Stats"
+            title="Fun Facts"
+            side="Growing"
+          />
+
+          <div className="stats-grid">
+            {[
+              ["20", "Tools & Technologies"],
+              ["3", "Core Interests"],
+              ["100%", "Learning by Building"],
+              ["24/7", "Curiosity"],
+            ].map(([value, label]) => (
+              <article key={label} className="stat-card">
+                <strong>{value}</strong>
+                <span>{label}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="experience" className="section-block bg-cream text-dark">
+          <SectionTitle
+            number="07"
+            eyebrow="Experience"
+            title="Learning Journey"
+            side="Present"
+          />
+
+          <div className="experience-list">
+            {EXPERIENCES.map((item) => {
+              const images = item.images ?? [];
+              const activeImageIndex =
+                images.length > 0 ? activeExperienceImage % images.length : 0;
+
+              return (
+                <article
+                  key={item.place}
+                  className={`experience-row ${
+                    images.length > 0 ? "experience-row-with-image" : ""
+                  }`}
+                >
+                  <div>
+                    <h3>{item.place}</h3>
+                    <span>{item.role}</span>
+                  </div>
+
+                  <time>{item.date}</time>
+
+                  <div className="experience-detail">
+                    <p>{item.text}</p>
+
+                    {images.length > 0 ? (
+                      <div className="experience-slider">
+                        <div
+                          className="experience-track"
+                          style={{
+                            transform: `translateX(-${activeImageIndex * 100}%)`,
+                          }}
+                        >
+                          {images.map((image) => (
+                            <Image
+                              key={image}
+                              src={image}
+                              alt={item.imageAlt ?? item.place}
+                              width={720}
+                              height={450}
+                              className="experience-slide"
+                            />
+                          ))}
+                        </div>
+
+                        <div className="experience-dots">
+                          {images.map((_, dotIndex) => (
+                            <button
+                              key={dotIndex}
+                              type="button"
+                              className={`experience-dot ${
+                                dotIndex === activeImageIndex ? "is-active" : ""
+                              }`}
+                              aria-label={`Show image ${dotIndex + 1}`}
+                              onClick={() => setActiveExperienceImage(dotIndex)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section id="contact" className="contact-section">
+          <div className="contact-card scroll-fade">
+            <span>08 Contact</span>
+            <h2>
+              <SplitText text="Let's Build Something Useful." />
+            </h2>
+            <p>
+              Interested to collaborate, discuss a project, or connect with me?
+              Reach me through email, GitHub, or LinkedIn.
+            </p>
+
+            <div>
+              <a href="mailto:ardianmaulana92251@gmail.com">Email Me</a>
+
+              <a
+                href="https://github.com/ardianmaulanaa"
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+
+              <a
+                href="https://www.linkedin.com/in/muhammad-ardian-maulana-92449b30a/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                LinkedIn
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <footer className="site-footer">
+          © 2026 Muhammad Ardian Maulana. Portfolio inspired layout, modified
+          for developer identity.
+        </footer>
+      </div>
     </main>
   );
 }

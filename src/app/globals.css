@@ -96,7 +96,11 @@ img {
   position: absolute;
   inset: 0;
   opacity: 0.12;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.35) 1px,
+    transparent 1px
+  );
   background-size: 18px 18px;
   -webkit-mask-image: linear-gradient(to bottom, black, transparent 88%);
   mask-image: linear-gradient(to bottom, black, transparent 88%);
@@ -377,7 +381,11 @@ img {
   padding: 92px 28px 34px;
 
   background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent 34%),
+    radial-gradient(
+      circle at center,
+      rgba(255, 255, 255, 0.06),
+      transparent 34%
+    ),
     #050505;
 
   color: #f7f1e3;
@@ -410,7 +418,10 @@ img {
     linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
     radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
 
-  background-size: 160px 160px, 160px 160px, 6px 6px;
+  background-size:
+    160px 160px,
+    160px 160px,
+    6px 6px;
 }
 
 .fullscreen-menu-top,
@@ -677,7 +688,11 @@ img {
   width: 420px;
   height: 420px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.45), transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(249, 115, 22, 0.45),
+    transparent 68%
+  );
   filter: blur(18px);
   animation: slowPulse 5s ease-in-out infinite;
 }
@@ -690,7 +705,11 @@ img {
   border: 1px solid rgba(247, 241, 227, 0.25);
   border-radius: 999px;
   padding: 14px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.02)
+  );
   box-shadow: 0 32px 90px rgba(0, 0, 0, 0.42);
 }
 
@@ -876,7 +895,10 @@ img {
     linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 320px 320px, 320px 320px, 6px 6px;
+  background-size:
+    320px 320px,
+    320px 320px,
+    6px 6px;
   opacity: 0.35;
   pointer-events: none;
 }
@@ -1056,13 +1078,13 @@ img {
 
   .portfolio-title {
     max-width: 760px;
-  margin: 0 0 72px;
-  font-size: clamp(72px, 8vw, 150px);
-  font-weight: 1000;
-  line-height: 0.82;
-  letter-spacing: -7px;
-  text-transform: uppercase;
-  color: #fff;
+    margin: 0 0 72px;
+    font-size: clamp(72px, 8vw, 150px);
+    font-weight: 1000;
+    line-height: 0.82;
+    letter-spacing: -7px;
+    text-transform: uppercase;
+    color: #fff;
   }
 
   .portfolio-desc,
@@ -1399,15 +1421,22 @@ img {
   text-transform: uppercase;
 }
 
-
 /* ================= EDUCATION & CERTIFICATES ================= */
 
 .education-section {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 15% 18%, rgba(249, 115, 22, 0.16), transparent 34%),
-    radial-gradient(circle at 86% 72%, rgba(255, 255, 255, 0.09), transparent 30%),
+    radial-gradient(
+      circle at 15% 18%,
+      rgba(249, 115, 22, 0.16),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 86% 72%,
+      rgba(255, 255, 255, 0.09),
+      transparent 30%
+    ),
     #101012;
 }
 
@@ -1666,7 +1695,11 @@ img {
   border-radius: 44px;
   padding: clamp(32px, 6vw, 72px);
   background:
-    radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.22), transparent 38%),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(249, 115, 22, 0.22),
+      transparent 38%
+    ),
     rgba(255, 255, 255, 0.04);
   box-shadow: 0 40px 110px rgba(0, 0, 0, 0.38);
 }
@@ -1735,7 +1768,9 @@ img {
 .stat-card {
   opacity: 0;
   transform: translateY(30px);
-  transition: opacity 0.9s ease, transform 0.9s ease;
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease;
 }
 
 .scroll-fade.is-visible,
@@ -2260,7 +2295,9 @@ svg {
   background: rgba(255, 255, 255, 0.68);
   cursor: pointer;
 
-  transition: width 0.25s ease, background 0.25s ease;
+  transition:
+    width 0.25s ease,
+    background 0.25s ease;
 }
 
 .experience-dot.is-active {
@@ -2465,7 +2502,10 @@ svg {
   padding: 24px;
 }
 
-.education-layout.certificates-only .certificate-card .certificate-content > span {
+.education-layout.certificates-only
+  .certificate-card
+  .certificate-content
+  > span {
   width: fit-content;
   border: 1px solid rgba(249, 115, 22, 0.35);
   border-radius: 999px;
@@ -2674,5 +2714,121 @@ svg {
 
   .certificate-arrow {
     font-size: 24px;
+  }
+} /* =========================================================
+   SMOOTH TRANSITION: OPENING INTRO -> PORTFOLIO PAGE
+   Tambahkan di PALING BAWAH globals.css.
+========================================================= */
+
+.portfolio-page {
+  isolation: isolate;
+}
+
+.portfolio-content-reveal {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  filter: blur(10px);
+  transform: translate3d(0, 54px, 0) scale(0.985);
+  transform-origin: 50% 0%;
+  pointer-events: none;
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 950ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1200ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 950ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.portfolio-content-reveal.is-ready {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) scale(1);
+  pointer-events: auto;
+}
+
+.portfolio-opening-bg {
+  opacity: 0;
+  transform: scale(1.08);
+  transform-origin: center;
+  will-change: opacity, transform;
+  transition:
+    opacity 1250ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.portfolio-opening-bg.is-ready {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.side-nav.intro-nav {
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0);
+  pointer-events: none;
+  will-change: opacity, transform;
+  transition:
+    opacity 700ms ease 180ms,
+    transform 950ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+.side-nav.intro-nav.is-ready {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+.mobile-nav.intro-nav {
+  opacity: 0;
+  transform: translate3d(0, -100%, 0);
+  pointer-events: none;
+  will-change: opacity, transform;
+  transition:
+    opacity 700ms ease 180ms,
+    transform 950ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+.mobile-nav.intro-nav.is-ready {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+}
+
+/* Hero ikut masuk bertahap setelah intro mulai menghilang. */
+.portfolio-page-ready .hero-topline.scroll-fade.is-visible {
+  transition-delay: 80ms;
+}
+
+.portfolio-page-ready .hero-grid > .scroll-fade.is-visible {
+  transition-delay: 150ms;
+}
+
+.portfolio-page-ready .hero-profile.scroll-fade.is-visible {
+  transition-delay: 240ms;
+}
+
+.portfolio-page-ready .hero-bottom.scroll-fade.is-visible {
+  transition-delay: 320ms;
+}
+
+@media (max-width: 767px) {
+  .portfolio-content-reveal {
+    filter: blur(7px);
+    transform: translate3d(0, 36px, 0) scale(0.99);
+  }
+
+  .portfolio-content-reveal.is-ready {
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-content-reveal,
+  .portfolio-opening-bg,
+  .side-nav.intro-nav,
+  .mobile-nav.intro-nav {
+    filter: none !important;
+    transform: none !important;
+    transition-duration: 1ms !important;
   }
 }
