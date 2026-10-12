@@ -18,6 +18,10 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       touchMultiplier: 1.1,
     });
 
+    lenis.on("scroll", () => {
+      window.dispatchEvent(new Event("lenis-scroll"));
+    });
+
     let rafId: number;
 
     function raf(time: number) {

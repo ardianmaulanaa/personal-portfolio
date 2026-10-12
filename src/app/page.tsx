@@ -1,10 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Lenis from "lenis";
-
-import OpeningIntro from "@/components/OpeningIntro";
+import { useRouter } from "next/navigation";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 
 import {
   Home,
@@ -15,12 +21,16 @@ import {
   BarChart3,
   GraduationCap,
   Mail,
+  LayoutGrid,
+  Sparkles,
 } from "lucide-react";
 
 interface ApproachItem {
-  number: string;
-  title: string;
-  text: string;
+  value: number;
+  label: string;
+  suffix?: string;
+  decimals?: number;
+  duration?: number;
 }
 
 interface ExperienceItem {
@@ -43,6 +53,44 @@ interface NavItem {
   href: string;
   label: string;
 }
+
+type ProjectCategory = "All" | "FullStack" | "DevOps" | "AI" | "System-Analyst";
+
+interface ProjectItem {
+  title: string;
+  category: Exclude<ProjectCategory, "All">;
+  label: string;
+  image: string;
+  href: string;
+  size: "large" | "small";
+}
+
+const PROJECTS: ProjectItem[] = [
+  {
+    title: "GreenMarket",
+    category: "FullStack",
+    label: "MARKETPLACE",
+    image: "/img/greenmarket/1.png",
+    href: "/projects/greenmarket",
+    size: "large",
+  },
+  {
+    title: "E Tilang - Detect Wrong Way",
+    category: "AI",
+    label: "COMPUTER VISION",
+    image: "/img/multimedia/4.JPG",
+    href: "/projects/E-tilang",
+    size: "small",
+  },
+];
+
+const PROJECT_CATEGORIES: ProjectCategory[] = [
+  "All",
+  "FullStack",
+  "DevOps",
+  "AI",
+  "System-Analyst",
+];
 
 const SKILLS: string[] = [
   "HTML",
@@ -69,19 +117,28 @@ const SKILLS: string[] = [
 
 const APPROACH: ApproachItem[] = [
   {
-    number: "01",
-    title: "Web Development",
-    text: "Building modern, responsive, and user-friendly websites such as portfolios, landing pages, dashboards, and web-based systems.",
+    value: 3.68,
+    label: "GPA",
+    decimals: 2,
+    duration: 1600,
   },
   {
-    number: "02",
-    title: "Artificial Intelligence",
-    text: "Exploring AI concepts, machine learning basics, automation ideas, and intelligent features that can improve digital products.",
+    value: 5,
+    label: "Projects",
+    suffix: "+",
+    duration: 1300,
   },
   {
-    number: "03",
-    title: "Cybersecurity",
-    text: "Learning security fundamentals, system protection, vulnerability awareness, and safer development practices for web applications.",
+    value: 1,
+    label: "Years",
+    suffix: "+",
+    duration: 900,
+  },
+  {
+    value: 20,
+    label: "Experiences",
+    suffix: "+",
+    duration: 1800,
   },
 ];
 
@@ -255,13 +312,19 @@ function SectionTitle({
 function AnimatedBackground({ isReady }: { isReady: boolean }) {
   return (
     <div
-      className={`portfolio-opening-bg pointer-events-none fixed inset-0 z-0 overflow-hidden ${
+      className={`portfolio-opening-bg site-background pointer-events-none absolute inset-0 z-0 overflow-hidden ${
         isReady ? "is-ready" : ""
       }`}
+      aria-hidden="true"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(249,115,22,0.16),transparent_32%),radial-gradient(circle_at_78%_26%,rgba(255,255,255,0.12),transparent_30%),radial-gradient(circle_at_50%_88%,rgba(249,115,22,0.12),transparent_36%)]" />
-      <div className="noise-layer" />
-      <div className="grid-layer" />
+      <div className="site-background-base" />
+      <div className="site-background-tones" />
+      <div className="site-background-diagonal" />
+      <div className="site-background-grid" />
+      <div className="site-background-glow site-background-glow-hero" />
+      <div className="site-background-glow site-background-glow-projects" />
+      <div className="site-background-glow site-background-glow-contact" />
+      <div className="noise-layer site-background-noise" />
       <div className="orb orb-one" />
       <div className="orb orb-two" />
       <div className="orb orb-three" />
@@ -287,7 +350,9 @@ function SideIcon({ label }: { label: string }) {
 }
 
 function CustomCursor() {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
@@ -325,31 +390,755 @@ function CustomCursor() {
       <div
         className="cursor-dot"
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          left: position ? `${position.x}px` : "-999px",
+          top: position ? `${position.y}px` : "-999px",
         }}
       />
 
       <div
         className={`cursor-circle ${isHovering ? "is-hovering" : ""}`}
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          left: position ? `${position.x}px` : "-999px",
+          top: position ? `${position.y}px` : "-999px",
         }}
       />
     </>
   );
 }
 
-export default function HomePage() {
-  const duplicatedSkills = useMemo(() => [...SKILLS, ...SKILLS], []);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeExperienceImage, setActiveExperienceImage] = useState(0);
-  const [pageReady, setPageReady] = useState(false);
+function CountUp({
+  target,
+  duration = 1500,
+  decimals = 0,
+  suffix = "",
+}: {
+  target: number;
+  duration?: number;
+  decimals?: number;
+  suffix?: string;
+}) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const [hasStarted, setHasStarted] = useState(false);
 
-  const handleIntroReveal = useCallback(() => {
-    setPageReady(true);
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasStarted) {
+          setHasStarted(true);
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.4,
+      },
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [hasStarted]);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    let startTime: number | null = null;
+
+    const animate = (currentTime: number) => {
+      if (startTime === null) {
+        startTime = currentTime;
+      }
+
+      const elapsed = currentTime - startTime;
+
+      const progress = Math.min(elapsed / duration, 1);
+
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+
+      const currentValue = target * easeOut;
+
+      setCount(currentValue);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [hasStarted, target, duration]);
+
+  return (
+    <strong ref={ref}>
+      {count.toFixed(decimals)}
+      {suffix}
+    </strong>
+  );
+}
+
+function ProjectCategoryIcon({ category }: { category: ProjectCategory }) {
+  const props = {
+    size: 19,
+    strokeWidth: 2,
+  };
+
+  if (category === "All") {
+    return <LayoutGrid {...props} />;
+  }
+
+  if (category === "FullStack") {
+    return <Code2 {...props} />;
+  }
+
+  if (category === "DevOps") {
+    return <Workflow {...props} />;
+  }
+
+  if (category === "AI") {
+    return <Sparkles {...props} />;
+  }
+
+  if (category === "System-Analyst") {
+    return <BarChart3 {...props} />;
+  }
+
+  return <LayoutGrid {...props} />;
+}
+
+interface AllProjectsHorizontalProps {
+  projects: ProjectItem[];
+  openingProjectHref: string | null;
+  onProjectOpen: (
+    href: string,
+  ) => (event: ReactMouseEvent<HTMLAnchorElement>) => void;
+}
+
+function AllProjectsHorizontal({
+  projects,
+  openingProjectHref,
+  onProjectOpen,
+}: AllProjectsHorizontalProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const cardRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+
+  const [layout, setLayout] = useState({
+    itemWidth: 620,
+    gap: 32,
+    sidePadding: 24,
+  });
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [canPin, setCanPin] = useState(projects.length > 1);
+
+  useEffect(() => {
+    cardRefs.current = cardRefs.current.slice(0, projects.length);
+  }, [projects.length]);
+
+  useEffect(() => {
+    const updateLayout = () => {
+      const availableWidth =
+        stickyRef.current?.clientWidth ?? window.innerWidth;
+
+      const isMobile = availableWidth <= 700;
+      const itemWidth = isMobile
+        ? Math.max(250, availableWidth - 44)
+        : Math.min(720, availableWidth * 0.64);
+      const gap = isMobile ? 18 : 32;
+      const sidePadding = Math.max(22, (availableWidth - itemWidth) / 2);
+
+      setLayout({ itemWidth, gap, sidePadding });
+    };
+
+    updateLayout();
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateLayout)
+        : null;
+
+    if (stickyRef.current && resizeObserver) {
+      resizeObserver.observe(stickyRef.current);
+    }
+
+    window.addEventListener("resize", updateLayout);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", updateLayout);
+    };
   }, []);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const sticky = stickyRef.current;
+    const track = trackRef.current;
+
+    if (!container || !sticky || !track) return;
+
+    let isCancelled = false;
+    let cleanup = () => {};
+
+    const setup = async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+
+      if (isCancelled) return;
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      const buildMetrics = () => {
+        const maxX = Math.max(0, track.scrollWidth - sticky.clientWidth);
+        const cards = cardRefs.current.filter(Boolean) as HTMLAnchorElement[];
+        const snapOffsets = cards.map((card) => {
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const viewportCenter = sticky.clientWidth / 2;
+
+          return Math.min(Math.max(cardCenter - viewportCenter, 0), maxX);
+        });
+
+        const uniqueSnapOffsets = Array.from(
+          new Set(snapOffsets.map((offset) => Math.round(offset))),
+        );
+
+        return {
+          maxX,
+          snapPoints:
+            maxX > 0
+              ? uniqueSnapOffsets.map((offset) => offset / maxX)
+              : [0],
+          snapOffsets: uniqueSnapOffsets,
+        };
+      };
+
+      const updateActiveProject = (xOffset: number) => {
+        const cards = cardRefs.current.filter(Boolean) as HTMLAnchorElement[];
+
+        if (!cards.length) {
+          setActiveIndex(0);
+          return;
+        }
+
+        const viewportCenter = sticky.clientWidth / 2;
+        const closestIndex = cards.reduce((closest, card, index) => {
+          const cardCenter = card.offsetLeft - xOffset + card.offsetWidth / 2;
+          const distance = Math.abs(cardCenter - viewportCenter);
+
+          return distance < closest.distance ? { index, distance } : closest;
+        }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
+
+        setActiveIndex(closestIndex);
+      };
+
+      const refreshState = () => {
+        const { maxX } = buildMetrics();
+        const shouldPin = projects.length > 1 && maxX > 8 && !mediaQuery.matches;
+
+        setCanPin(shouldPin);
+
+        if (!shouldPin) {
+          gsap.set(track, { clearProps: "transform" });
+          setProgress(0);
+          setActiveIndex(0);
+        }
+      };
+
+      refreshState();
+
+      const initialMetrics = buildMetrics();
+      const shouldPin =
+        projects.length > 1 && initialMetrics.maxX > 8 && !mediaQuery.matches;
+
+      if (!shouldPin) return;
+
+      const scrollTween = gsap.to(track, {
+        x: () => -buildMetrics().maxX,
+        ease: "none",
+        scrollTrigger: {
+          id: "portfolio-horizontal-scroll",
+          trigger: container,
+          pin: sticky,
+          scrub: 0.55,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          start: () => {
+            const navHeight = window.innerWidth < 1024 ? 76 : 0;
+            return `top top+=${navHeight}`;
+          },
+          end: () => {
+            const { maxX } = buildMetrics();
+            return `+=${Math.max(maxX + window.innerHeight * 0.5, window.innerHeight * 0.9)}`;
+          },
+          snap: {
+            snapTo: (value) => {
+              const { snapPoints, maxX } = buildMetrics();
+
+              if (maxX <= 8 || snapPoints.length <= 1) return value;
+
+              return snapPoints.reduce((closest, point) =>
+                Math.abs(point - value) < Math.abs(closest - value)
+                  ? point
+                  : closest,
+              );
+            },
+            duration: { min: 0.16, max: 0.42 },
+            delay: 0.08,
+            ease: "power2.out",
+          },
+          onRefresh: refreshState,
+          onUpdate: (self) => {
+            const { maxX } = buildMetrics();
+            const xOffset = self.progress * maxX;
+
+            setProgress(self.progress);
+            updateActiveProject(xOffset);
+          },
+        },
+      });
+
+      const refreshAfterAssets = () => ScrollTrigger.refresh();
+      const handleMotionChange = () => ScrollTrigger.refresh();
+      const handleLenisScroll = () => ScrollTrigger.update();
+
+      window.addEventListener("load", refreshAfterAssets, { once: true });
+      window.addEventListener("lenis-scroll", handleLenisScroll);
+      mediaQuery.addEventListener("change", handleMotionChange);
+
+      const resizeObserver =
+        typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(() => ScrollTrigger.refresh())
+          : null;
+
+      resizeObserver?.observe(sticky);
+      resizeObserver?.observe(track);
+
+      ScrollTrigger.refresh();
+
+      cleanup = () => {
+        window.removeEventListener("load", refreshAfterAssets);
+        window.removeEventListener("lenis-scroll", handleLenisScroll);
+        mediaQuery.removeEventListener("change", handleMotionChange);
+        resizeObserver?.disconnect();
+        scrollTween.scrollTrigger?.kill();
+        scrollTween.kill();
+        gsap.set(track, { clearProps: "transform" });
+      };
+    };
+
+    setup();
+
+    return () => {
+      isCancelled = true;
+      cleanup();
+    };
+  }, [layout.gap, layout.itemWidth, layout.sidePadding, projects]);
+
+  const projectCountLabel = String(projects.length).padStart(2, "0");
+  const activeProjectLabel = String(activeIndex + 1).padStart(2, "0");
+
+  return (
+    <div
+      ref={containerRef}
+      className={`portfolio-horizontal-scroll ${canPin ? "is-pinned-scroll" : "is-native-scroll"}`}
+    >
+      <div ref={stickyRef} className="portfolio-horizontal-sticky">
+        <div className="portfolio-horizontal-copy" aria-hidden="true">
+          <span>{projectCountLabel} PROJECTS</span>
+          <span className="portfolio-horizontal-hint">
+            {canPin ? "Scroll to explore projects" : "Swipe projects"}
+          </span>
+        </div>
+
+        <div
+          ref={trackRef}
+          className="portfolio-horizontal-track"
+          style={{
+            gap: layout.gap,
+            paddingLeft: layout.sidePadding,
+            paddingRight: layout.sidePadding,
+          }}
+        >
+          {projects.map((project, index) => (
+            <a
+              key={project.href}
+              ref={(node) => {
+                cardRefs.current[index] = node;
+              }}
+              href={project.href}
+              className={`portfolio-card-work portfolio-horizontal-card ${
+                openingProjectHref === project.href ? "is-opening" : ""
+              } ${activeIndex === index ? "is-active" : ""}`}
+              style={{ width: layout.itemWidth }}
+              aria-label={`Open ${project.title} project`}
+              onClick={onProjectOpen(project.href)}
+            >
+              <div className="portfolio-horizontal-index" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+
+              <div className="portfolio-image horizontal">
+                <Image
+                  src={project.image}
+                  alt={`${project.title} preview`}
+                  width={1200}
+                  height={760}
+                />
+              </div>
+
+              <div className="portfolio-work-meta">
+                <div>
+                  <h3>{project.title}</h3>
+                  <p>{project.label}</p>
+                </div>
+
+                <span className="portfolio-category-chip">
+                  {project.category === "System-Analyst"
+                    ? "System Analyst"
+                    : project.category}
+                </span>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        <div className="portfolio-horizontal-progress" aria-hidden="true">
+          <span style={{ transform: `scaleX(${progress})` }} />
+          <strong>
+            {activeProjectLabel} / {projectCountLabel}
+          </strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const router = useRouter();
+
+  const duplicatedSkills = useMemo(() => [...SKILLS, ...SKILLS], []);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("home");
+
+  const [activeExperienceImage, setActiveExperienceImage] = useState(0);
+
+  const [pageReady] = useState(true);
+
+  const [activeProjectCategory, setActiveProjectCategory] =
+    useState<ProjectCategory>("All");
+
+  const [openingProjectHref, setOpeningProjectHref] = useState<string | null>(
+    null,
+  );
+
+  const filteredProjects = useMemo(() => {
+    if (activeProjectCategory === "All") {
+      return PROJECTS;
+    }
+
+    return PROJECTS.filter(
+      (project) => project.category === activeProjectCategory,
+    );
+  }, [activeProjectCategory]);
+
+  const handleProjectOpen = useCallback(
+    (href: string) => (event: ReactMouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+
+      if (openingProjectHref) return;
+
+      setOpeningProjectHref(href);
+
+      window.setTimeout(() => {
+        router.push(href);
+      }, 620);
+    },
+    [openingProjectHref, router],
+  );
+
+  useLayoutEffect(() => {
+    if (!pageReady) return;
+
+    const hero = document.querySelector<HTMLElement>(".hero-section");
+    const glow = document.querySelector<HTMLElement>(".hero-ambient-glow");
+    const background = document.querySelector<HTMLElement>(".portfolio-opening-bg");
+    const sideNavItems = document.querySelectorAll<HTMLElement>(
+      ".side-nav a, .side-contact",
+    );
+
+    if (!hero) return;
+
+    let isCancelled = false;
+    let cleanup = () => {};
+
+    const setupHeroMotion = async () => {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+
+      if (isCancelled) return;
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      );
+      const canHover = window.matchMedia(
+        "(hover: hover) and (pointer: fine)",
+      ).matches;
+      const ctx = gsap.context(() => {
+        const nameLines = gsap.utils.toArray<HTMLElement>(".hero-name-line");
+        const secondaryItems = gsap.utils.toArray<HTMLElement>(
+          ".hero-location, .hero-topline, .hero-bottom",
+        );
+        const profile = document.querySelector<HTMLElement>(".hero-profile");
+        const profileRing = document.querySelector<HTMLElement>(".profile-ring");
+        const profileCards =
+          gsap.utils.toArray<HTMLElement>(".hero-profile .profile-card");
+
+        if (reduceMotion.matches) {
+          gsap.set(
+            [
+              background,
+              glow,
+              sideNavItems,
+              nameLines,
+              secondaryItems,
+              profile,
+              profileCards,
+              profileRing,
+            ],
+            { clearProps: "all" },
+          );
+          gsap.set([nameLines, secondaryItems, profile, profileCards], {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            filter: "none",
+          });
+          gsap.set(profileRing, { "--orbit-opacity": 0.55 });
+          return;
+        }
+
+        gsap.set(glow, { opacity: 0, x: 0, y: 0 });
+        gsap.set(sideNavItems, { opacity: 0, x: -12 });
+        gsap.set(nameLines, { opacity: 0, y: 56 });
+        gsap.set(secondaryItems, { opacity: 0, y: 14 });
+        gsap.set(profile, {
+          opacity: 0,
+          scale: 0.92,
+          y: 18,
+          filter: "blur(10px)",
+          clipPath: "circle(34% at 50% 50%)",
+        });
+        gsap.set(profileRing, { "--orbit-opacity": 0 });
+        gsap.set(profileCards, { opacity: 0, y: 16, scale: 0.96 });
+
+        const intro = gsap.timeline({
+          defaults: { ease: "power3.out" },
+          onComplete: () => {
+            gsap.set([nameLines, secondaryItems, profile, profileCards], {
+              clearProps: "willChange",
+            });
+          },
+        });
+
+        intro
+          .to(background, { opacity: 1, scale: 1, duration: 0.55 }, 0)
+          .to(glow, { opacity: 1, duration: 0.55, ease: "power2.out" }, 0.05)
+          .to(
+            sideNavItems,
+            { opacity: 1, x: 0, duration: 0.44, stagger: 0.055 },
+            0.15,
+          )
+          .to(
+            nameLines,
+            { opacity: 1, y: 0, duration: 0.86, stagger: 0.16 },
+            0.3,
+          )
+          .to(
+            profile,
+            {
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              filter: "blur(0px)",
+              clipPath: "circle(76% at 50% 50%)",
+              duration: 0.82,
+            },
+            0.65,
+          )
+          .to(
+            profileRing,
+            { "--orbit-opacity": 0.62, duration: 0.7, ease: "power2.out" },
+            0.85,
+          )
+          .to(
+            profileCards,
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.62,
+              stagger: 0.12,
+              ease: "power2.out",
+            },
+            1,
+          )
+          .to(
+            secondaryItems,
+            { opacity: 1, y: 0, duration: 0.58, stagger: 0.08 },
+            1.1,
+          );
+
+        if (canHover && glow) {
+          const moveGlowX = gsap.quickTo(glow, "x", {
+            duration: 0.8,
+            ease: "power3.out",
+          });
+          const moveGlowY = gsap.quickTo(glow, "y", {
+            duration: 0.8,
+            ease: "power3.out",
+          });
+
+          const handlePointerMove = (event: PointerEvent) => {
+            const rect = hero.getBoundingClientRect();
+            const normalizedX =
+              (event.clientX - rect.left) / rect.width - 0.5;
+            const normalizedY =
+              (event.clientY - rect.top) / rect.height - 0.5;
+
+            moveGlowX(normalizedX * 76);
+            moveGlowY(normalizedY * 62);
+          };
+          const handlePointerLeave = () => {
+            moveGlowX(0);
+            moveGlowY(0);
+          };
+
+          hero.addEventListener("pointermove", handlePointerMove);
+          hero.addEventListener("pointerleave", handlePointerLeave);
+
+          cleanup = () => {
+            hero.removeEventListener("pointermove", handlePointerMove);
+            hero.removeEventListener("pointerleave", handlePointerLeave);
+          };
+        }
+
+        if (window.innerWidth >= 768) {
+          gsap.to(".profile-card-one", {
+            y: -3,
+            duration: 4.6,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+          });
+          gsap.to(".profile-card-two", {
+            y: 4,
+            duration: 5.4,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut",
+            delay: 0.45,
+          });
+        }
+
+        const exitTimeline = gsap.timeline({
+          scrollTrigger: {
+            id: "hero-scroll-exit",
+            trigger: hero,
+            start: "top top",
+            end: () => `+=${Math.min(hero.offsetHeight * 0.72, 680)}`,
+            scrub: 0.65,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        exitTimeline
+          .to(
+            ".hero-copy-reveal",
+            { y: () => (window.innerWidth < 768 ? -28 : -62), opacity: 0.55, ease: "none" },
+            0,
+          )
+          .to(
+            ".hero-profile",
+            { y: () => (window.innerWidth < 768 ? 18 : 44), opacity: 0.78, ease: "none" },
+            0,
+          )
+          .to(
+            ".hero-topline, .hero-bottom",
+            { y: -20, opacity: 0.2, ease: "none" },
+            0,
+          )
+          .to(glow, { y: -24, opacity: 0.56, ease: "none" }, 0);
+
+        const handleLenisScroll = () => ScrollTrigger.update();
+
+        window.addEventListener("lenis-scroll", handleLenisScroll);
+
+        const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 80);
+
+        cleanup = ((previousCleanup) => () => {
+          previousCleanup();
+          window.clearTimeout(refreshTimer);
+          window.removeEventListener("lenis-scroll", handleLenisScroll);
+        })(cleanup);
+      }, hero);
+
+      const previousCleanup = cleanup;
+      cleanup = () => {
+        previousCleanup();
+        ctx.revert();
+      };
+    };
+
+    setupHeroMotion();
+
+    return () => {
+      isCancelled = true;
+      cleanup();
+    };
+  }, [pageReady]);
+
+  useEffect(() => {
+    if (!pageReady) return;
+
+    const sections = NAV_ITEMS.map((item) =>
+      document.querySelector<HTMLElement>(item.href),
+    ).filter(Boolean) as HTMLElement[];
+
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visibleEntry?.target.id) {
+          setActiveSection(visibleEntry.target.id);
+        }
+      },
+      {
+        rootMargin: "-38% 0px -48% 0px",
+        threshold: [0.08, 0.18, 0.32, 0.48],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, [pageReady]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveExperienceImage((prev) => (prev + 1) % 3);
@@ -361,24 +1150,8 @@ export default function HomePage() {
   useEffect(() => {
     if (!pageReady) return;
 
-    const lenis = new Lenis({
-      duration: 1,
-      wheelMultiplier: 0.55,
-      touchMultiplier: 1.1,
-      smoothWheel: true,
-    });
-
-    let animationFrame = 0;
-
-    function raf(time: number) {
-      lenis.raf(time);
-      animationFrame = requestAnimationFrame(raf);
-    }
-
-    animationFrame = requestAnimationFrame(raf);
-
     const targets = document.querySelectorAll(
-      ".scroll-fade, .phase-card, .project-row, .service-row, .education-card, .certificate-card, .experience-row, .stat-card",
+      ".scroll-fade, .approach-stat-card, .project-row, .service-row, .education-card, .certificate-card, .experience-row, .stat-card",
     );
 
     const observer = new IntersectionObserver(
@@ -396,24 +1169,31 @@ export default function HomePage() {
     targets.forEach((target) => observer.observe(target));
 
     return () => {
-      cancelAnimationFrame(animationFrame);
       observer.disconnect();
-      lenis.destroy();
     };
-  }, [pageReady]);
+  }, [pageReady, activeProjectCategory]);
 
   return (
     <main
-      className={`portfolio-page relative min-h-screen overflow-hidden bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px] ${
-        pageReady ? "portfolio-page-ready" : ""
+      className={`portfolio-page relative min-h-screen bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px] ${
+        pageReady ? "portfolio-page-ready has-custom-cursor" : ""
       }`}
     >
-      <OpeningIntro onRevealStart={handleIntroReveal} />
       {pageReady ? <CustomCursor /> : null}
       <AnimatedBackground isReady={pageReady} />
+      <div
+        className={`project-transition-overlay ${
+          openingProjectHref ? "is-active" : ""
+        }`}
+        aria-hidden="true"
+      />
 
       <aside className={`side-nav intro-nav ${pageReady ? "is-ready" : ""}`}>
-        <a href="#home" className="side-logo" aria-label="Home">
+        <a
+          href="#home"
+          className={`side-logo ${activeSection === "home" ? "is-active" : ""}`}
+          aria-label="Home"
+        >
           <span>ARDN</span>
           <small>DEV</small>
         </a>
@@ -423,16 +1203,27 @@ export default function HomePage() {
             <a
               key={item.href}
               href={item.href}
+              className={
+                activeSection === item.href.slice(1) ? "is-active" : undefined
+              }
               title={item.label}
               aria-label={item.label}
             >
               <SideIcon label={item.label} />
+              <span className="side-tooltip">{item.label}</span>
             </a>
           ))}
         </div>
 
-        <a href="#contact" className="side-contact" aria-label="Contact">
+        <a
+          href="#contact"
+          className={`side-contact ${
+            activeSection === "contact" ? "is-active" : ""
+          }`}
+          aria-label="Contact"
+        >
           <Mail size={18} strokeWidth={2.4} />
+          <span className="side-tooltip">Contact</span>
         </a>
       </aside>
 
@@ -489,6 +1280,8 @@ export default function HomePage() {
         className={`portfolio-content-reveal ${pageReady ? "is-ready" : ""}`}
       >
         <section id="home" className="hero-section">
+          <div className="hero-ambient-glow" aria-hidden="true" />
+
           <div className="hero-topline scroll-fade">
             <div>
               <span>DEV /</span>
@@ -499,14 +1292,24 @@ export default function HomePage() {
           </div>
 
           <div className="hero-grid">
-            <div className="scroll-fade">
+            <div className="hero-copy-reveal">
               <p className="hero-location">
                 Based in Indonesia • Available Worldwide
               </p>
               <h1 className="hero-title">
-                Muhammad
-                <span>Ardian</span>
-                Maulana
+                <span className="hero-name-mask">
+                  <span className="hero-name-line hero-name-1">Muhammad</span>
+                </span>
+
+                <span className="hero-name-mask">
+                  <span className="hero-name-line hero-name-2 hero-name-orange">
+                    Ardian
+                  </span>
+                </span>
+
+                <span className="hero-name-mask">
+                  <span className="hero-name-line hero-name-3">Maulana</span>
+                </span>
               </h1>
             </div>
 
@@ -530,18 +1333,12 @@ export default function HomePage() {
 
               <div className="profile-card profile-card-two">
                 <span>Focus</span>
-                <b>Fullstack • AI • Cyber</b>
+                <b>FullStack • DevOps • AI • Cyber</b>
               </div>
             </div>
           </div>
 
           <div className="hero-bottom scroll-fade">
-            <p>
-              Informatics student focused on building useful digital products,
-              backend systems, web applications, cybersecurity, and artificial
-              intelligence.
-            </p>
-
             <div className="hero-role">
               <span>Web Developer</span>
             </div>
@@ -550,19 +1347,20 @@ export default function HomePage() {
 
         <section id="approach" className="section-block bg-cream text-dark">
           <div className="main-focus-title">
-            <SectionTitle
-              number="01"
-              title="Main Focus"
-              side="Web • AI • Cyber"
-            />
+            <SectionTitle number="01" title="Quick Facts" side="2026" />
           </div>
 
-          <div className="phase-grid">
+          <div className="approach-stats-grid">
             {APPROACH.map((item) => (
-              <article key={item.number} className="phase-card">
-                <span>{item.number}</span>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
+              <article key={item.label} className="approach-stat-card">
+                <CountUp
+                  target={item.value}
+                  duration={item.duration}
+                  decimals={item.decimals}
+                  suffix={item.suffix}
+                />
+
+                <span>{item.label}</span>
               </article>
             ))}
           </div>
@@ -575,67 +1373,37 @@ export default function HomePage() {
             <span>2026</span>
           </div>
 
-          <div className="portfolio-layout">
-            <div className="portfolio-left">
-              <h2 className="portfolio-title scroll-fade">
-                <SplitText text="Latest Portfolio" />
-              </h2>
+          <div className="project-filter scroll-fade">
+            {PROJECT_CATEGORIES.map((category) => (
+              <button
+                key={category}
+                type="button"
+                className={`project-filter-button ${
+                  activeProjectCategory === category ? "is-active" : ""
+                }`}
+                onClick={() => setActiveProjectCategory(category)}
+              >
+                <ProjectCategoryIcon category={category} />
 
-              <article className="portfolio-card-work scroll-fade">
-                <div className="portfolio-image large">
-                  <Image
-                    src="/img/greenmarket/1.png"
-                    alt="GreenMarket preview"
-                    width={800}
-                    height={500}
-                  />
-                </div>
-
-                <div className="portfolio-work-meta">
-                  <div>
-                    <h3>GreenMarket</h3>
-                    <p>MARKETPLACE</p>
-                  </div>
-
-                  <a href="/projects/greenmarket" aria-label="Open GreenMarket">
-                    →
-                  </a>
-                </div>
-              </article>
-            </div>
-
-            <div className="portfolio-right">
-              <div className="portfolio-desc scroll-fade">
-                <span className="portfolio-dot" />
-                <p>
-                  My creative spirit comes alive in the digital realm. With
-                  clean code, modern layout, and practical features.
-                </p>
-              </div>
-
-              <article className="portfolio-card-work portfolio-card-lower scroll-fade">
-                <div className="portfolio-image small">
-                  <Image
-                    src="/img/multimedia/4.JPG"
-                    alt="GreenMarket preview"
-                    width={800}
-                    height={500}
-                  />
-                </div>
-
-                <div className="portfolio-work-meta">
-                  <div>
-                    <h3>E Tilang - Detect Wrong Way</h3>
-                    <p>COMPUTER VISION</p>
-                  </div>
-
-                  <a href="/projects/E-tilang" aria-label="E-Tilang">
-                    →
-                  </a>
-                </div>
-              </article>
-            </div>
+                <span>
+                  {category === "System-Analyst" ? "System Analyst" : category}
+                </span>
+              </button>
+            ))}
           </div>
+
+          {filteredProjects.length > 0 ? (
+            <AllProjectsHorizontal
+              projects={filteredProjects}
+              openingProjectHref={openingProjectHref}
+              onProjectOpen={handleProjectOpen}
+            />
+          ) : (
+            <div className="portfolio-empty-state">
+              <span>{activeProjectCategory}</span>
+              <p>Project untuk kategori ini sedang disiapkan.</p>
+            </div>
+          )}
         </section>
 
         <section id="about" className="section-block bg-cream text-dark">

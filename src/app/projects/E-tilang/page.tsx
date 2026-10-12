@@ -28,12 +28,12 @@ const GALLERY = [
 
 export default function ETilangPage() {
   return (
-    <main className="min-h-screen bg-[#08090c] text-[#f7f1e3]">
-      <section className="relative overflow-hidden px-6 py-8 md:px-12 lg:px-20">
+    <main className="project-detail-page min-h-screen bg-[#08090c] text-[#f7f1e3]">
+      <section className="project-detail-hero relative overflow-hidden px-6 py-8 md:px-12 lg:px-20">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(239,68,68,0.2),transparent_34%),radial-gradient(circle_at_80%_25%,rgba(59,130,246,0.14),transparent_32%)]" />
 
         <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="mb-12 flex items-center justify-between">
+          <div className="project-detail-toolbar mb-12 flex items-center justify-between">
             <Link
               href="/"
               className="rounded-full border border-white/20 px-5 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white hover:text-black"
@@ -47,7 +47,7 @@ export default function ETilangPage() {
           </div>
 
           <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div>
+            <div className="project-detail-copy">
               <p className="mb-4 text-sm font-bold uppercase tracking-[0.35em] text-red-400">
                 Computer Vision Project
               </p>
@@ -83,7 +83,7 @@ export default function ETilangPage() {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="project-detail-media relative">
               <div className="absolute -inset-5 rounded-[3rem] bg-red-400/20 blur-3xl" />
 
               <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-3 shadow-2xl backdrop-blur">
