@@ -12,6 +12,8 @@ import {
 } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
+import OpeningIntro, { INTRO_SESSION_KEY } from "@/components/OpeningIntro";
+
 import {
   Home,
   Workflow,
@@ -830,7 +832,9 @@ export default function HomePage() {
 
   const [activeExperienceImage, setActiveExperienceImage] = useState(0);
 
-  const [pageReady] = useState(true);
+  const [pageReady, setPageReady] = useState(false);
+  const [introChecked, setIntroChecked] = useState(false);
+  const [showIntro, setShowIntro] = useState(false);
 
   const [activeProjectCategory, setActiveProjectCategory] =
     useState<ProjectCategory>("All");
@@ -863,6 +867,34 @@ export default function HomePage() {
     },
     [openingProjectHref, router],
   );
+
+  useEffect(() => {
+    const introTimer = window.setTimeout(() => {
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const hasRestoredScroll = window.scrollY > 24;
+      let introPlayed = false;
+
+      try {
+        introPlayed =
+          window.sessionStorage.getItem(INTRO_SESSION_KEY) === "true";
+      } catch {
+        introPlayed = true;
+      }
+
+      if (reduceMotion || introPlayed || hasRestoredScroll) {
+        setPageReady(true);
+        setShowIntro(false);
+      } else {
+        setShowIntro(true);
+      }
+
+      setIntroChecked(true);
+    }, 0);
+
+    return () => window.clearTimeout(introTimer);
+  }, []);
 
   useLayoutEffect(() => {
     if (!pageReady) return;
@@ -1179,6 +1211,12 @@ export default function HomePage() {
         pageReady ? "portfolio-page-ready has-custom-cursor" : ""
       }`}
     >
+      {introChecked && showIntro ? (
+        <OpeningIntro
+          onRevealStart={() => setPageReady(true)}
+          onComplete={() => setShowIntro(false)}
+        />
+      ) : null}
       {pageReady ? <CustomCursor /> : null}
       <AnimatedBackground isReady={pageReady} />
       <div

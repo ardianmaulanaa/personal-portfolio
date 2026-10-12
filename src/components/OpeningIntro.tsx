@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
-const WORDS = ["Hello,", "this", "is", "Ardian's", "Portfolio."];
-
-type IntroPhase = "entering" | "waiting" | "leaving" | "hidden";
+const INTRO_SESSION_KEY = "ardn-signature-intro-played";
 
 interface OpeningIntroProps {
   onRevealStart?: () => void;
@@ -15,11 +14,14 @@ export default function OpeningIntro({
   onRevealStart,
   onComplete,
 }: OpeningIntroProps) {
-  const [phase, setPhase] = useState<IntroPhase>("entering");
-
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const timelineRef = useRef<{ kill: () => void } | null>(null);
+  const closeIntroRef = useRef<(fast?: boolean) => void>(() => {});
+  const closingRef = useRef(false);
   const onRevealStartRef = useRef(onRevealStart);
-
   const onCompleteRef = useRef(onComplete);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
     onRevealStartRef.current = onRevealStart;
@@ -30,471 +32,352 @@ export default function OpeningIntro({
   }, [onComplete]);
 
   useEffect(() => {
+    const root = rootRef.current;
+
+    if (!root) return;
+
+    let isMounted = true;
+    let cleanupGsap = () => {};
     const previousBodyOverflow = document.body.style.overflow;
+    const previousScrollbarGutter = document.documentElement.style.scrollbarGutter;
 
-    const previousScrollbarGutter =
-      document.documentElement.style.scrollbarGutter;
+    const finishIntro = (fast = false) => {
+      if (closingRef.current) return;
 
-    document.body.style.overflow = "hidden";
+      closingRef.current = true;
+      timelineRef.current?.kill();
 
-    document.documentElement.style.scrollbarGutter = "stable";
-
-    const waitingTimer = setTimeout(() => {
-      setPhase("waiting");
-    }, 2200);
-
-    const leavingTimer = setTimeout(() => {
-      setPhase("leaving");
+      try {
+        window.sessionStorage.setItem(INTRO_SESSION_KEY, "true");
+      } catch {
+        // Storage can be unavailable in private contexts; the intro still exits.
+      }
 
       onRevealStartRef.current?.();
-    }, 3000);
+      setIsClosing(true);
 
-    const closingTimer = setTimeout(() => {
-      setPhase("hidden");
+      window.setTimeout(
+        () => {
+          if (!isMounted) return;
 
-      document.body.style.overflow = previousBodyOverflow;
+          document.body.style.overflow = previousBodyOverflow;
+          document.documentElement.style.scrollbarGutter =
+            previousScrollbarGutter;
+          setIsHidden(true);
+          onCompleteRef.current?.();
+        },
+        fast ? 420 : 760,
+      );
+    };
 
-      document.documentElement.style.scrollbarGutter = previousScrollbarGutter;
+    closeIntroRef.current = finishIntro;
 
-      onCompleteRef.current?.();
-    }, 4100);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        finishIntro(true);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.scrollbarGutter = "stable";
+    window.addEventListener("keydown", handleKeyDown);
+
+    const setupIntro = async () => {
+      const { gsap } = await import("gsap");
+
+      if (!isMounted) return;
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
+      const signaturePaths = Array.from(
+        root.querySelectorAll<SVGPathElement>("[data-signature-path]"),
+      );
+      const underline = root.querySelector<SVGPathElement>(
+        "[data-signature-underline]",
+      );
+      const penTip = root.querySelector<SVGCircleElement>(".intro-pen-tip");
+
+      const preparePath = (path: SVGPathElement) => {
+        const length = path.getTotalLength();
+
+        path.style.strokeDasharray = `${length}`;
+        path.style.strokeDashoffset = `${length}`;
+
+        return length;
+      };
+
+      const pathLengths = signaturePaths.map(preparePath);
+      const underlineLength = underline ? preparePath(underline) : 0;
+
+      const setPenPosition = (path: SVGPathElement, progress: number) => {
+        if (!penTip) return;
+
+        const point = path.getPointAtLength(
+          path.getTotalLength() * Math.min(Math.max(progress, 0), 1),
+        );
+
+        gsap.set(penTip, {
+          attr: {
+            cx: point.x,
+            cy: point.y,
+          },
+        });
+      };
+
+      if (reduceMotion) {
+        gsap.set([...signaturePaths, underline].filter(Boolean), {
+          strokeDashoffset: 0,
+        });
+        gsap.set(root.querySelectorAll(".intro-reveal-item"), {
+          opacity: 1,
+          y: 0,
+        });
+        window.setTimeout(() => finishIntro(false), 520);
+        return;
+      }
+
+      const ctx = gsap.context(() => {
+        gsap.set(root.querySelector(".signature-svg"), {
+          opacity: 1,
+        });
+        gsap.set(root.querySelectorAll(".intro-reveal-item"), {
+          opacity: 0,
+          y: 12,
+        });
+        gsap.set(penTip, {
+          opacity: 0,
+        });
+
+        const timeline = gsap.timeline({
+          defaults: { ease: "power2.out" },
+          onComplete: () => finishIntro(false),
+        });
+
+        timeline
+          .fromTo(
+            root.querySelector(".opening-intro-grid"),
+            { opacity: 0 },
+            { opacity: 1, duration: 0.42 },
+            0,
+          )
+          .fromTo(
+            root.querySelector(".opening-intro-glow"),
+            { opacity: 0, scale: 0.86 },
+            { opacity: 1, scale: 1, duration: 0.72, ease: "power2.out" },
+            0.08,
+          )
+          .fromTo(
+            root.querySelector(".opening-intro-orbit"),
+            { opacity: 0, rotate: -16 },
+            { opacity: 1, rotate: 0, duration: 0.8 },
+            0.18,
+          );
+
+        const totalSignatureLength = pathLengths.reduce(
+          (total, length) => total + length,
+          0,
+        );
+
+        signaturePaths.forEach((path, index) => {
+          const proxy = { progress: 0 };
+          const duration = Math.max(
+            0.2,
+            (pathLengths[index] / totalSignatureLength) * 2.12,
+          );
+
+          timeline
+            .to(
+              penTip,
+              { opacity: 1, duration: 0.12 },
+              index === 0 ? 0.38 : ">-0.02",
+            )
+            .to(
+              path,
+              {
+                strokeDashoffset: 0,
+                duration,
+                ease: "sine.inOut",
+              },
+              index === 0 ? 0.42 : ">-0.03",
+            )
+            .to(
+              proxy,
+              {
+                progress: 1,
+                duration,
+                ease: "sine.inOut",
+                onStart: () => setPenPosition(path, 0),
+                onUpdate: () => setPenPosition(path, proxy.progress),
+              },
+              `<`,
+            );
+        });
+
+        if (underline) {
+          const underlineProxy = { progress: 0 };
+
+          timeline
+            .to(
+              underline,
+              {
+                strokeDashoffset: 0,
+                duration: 0.48,
+                ease: "power1.inOut",
+              },
+              ">-0.08",
+            )
+            .to(
+              underlineProxy,
+              {
+                progress: 1,
+                duration: 0.48,
+                ease: "power1.inOut",
+                onStart: () => underline && setPenPosition(underline, 0),
+                onUpdate: () =>
+                  underline && setPenPosition(underline, underlineProxy.progress),
+              },
+              "<",
+            );
+        }
+
+        timeline
+          .to(penTip, { opacity: 0, duration: 0.2 }, ">-0.04")
+          .to(
+            root.querySelectorAll(".intro-reveal-item"),
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.5,
+              stagger: 0.08,
+              ease: "power2.out",
+            },
+            ">-0.02",
+          )
+          .to(
+            root.querySelector(".signature-svg"),
+            {
+              scale: 0.985,
+              duration: 0.58,
+              transformOrigin: "50% 50%",
+              ease: "power2.inOut",
+            },
+            ">+0.2",
+          )
+          .to(root, { "--intro-exit-progress": 1, duration: 0.5 }, "<");
+
+        timelineRef.current = timeline;
+      }, root);
+
+      cleanupGsap = () => ctx.revert();
+
+      pathLengths.forEach((length, index) => {
+        signaturePaths[index].style.strokeDasharray = `${length}`;
+      });
+
+      if (underline && underlineLength) {
+        underline.style.strokeDasharray = `${underlineLength}`;
+      }
+    };
+
+    setupIntro();
 
     return () => {
-      clearTimeout(waitingTimer);
-      clearTimeout(leavingTimer);
-      clearTimeout(closingTimer);
-
+      isMounted = false;
+      timelineRef.current?.kill();
+      cleanupGsap();
+      closeIntroRef.current = () => {};
+      window.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousBodyOverflow;
-
       document.documentElement.style.scrollbarGutter = previousScrollbarGutter;
     };
   }, []);
 
-  if (phase === "hidden") {
+  if (isHidden) {
     return null;
   }
 
-  const isLeaving = phase === "leaving";
-
   return (
     <div
-      className={`portfolio-opening-root ${isLeaving ? "is-leaving" : ""}`}
-      role="status"
-      aria-label="Portfolio opening animation"
+      ref={rootRef}
+      className={`opening-intro-root ${isClosing ? "is-closing" : ""}`}
+      aria-label="ARDN portfolio signature intro"
+      role="dialog"
+      aria-modal="true"
+      style={{ "--intro-exit-progress": 0 } as CSSProperties}
     >
-      {/* PANEL KIRI */}
-      <div className="intro-panel intro-panel-left" />
+      <div className="opening-intro-grid" aria-hidden="true" />
+      <div className="opening-intro-glow" aria-hidden="true" />
+      <div className="opening-intro-orbit" aria-hidden="true" />
 
-      {/* PANEL KANAN */}
-      <div className="intro-panel intro-panel-right" />
+      <div className="opening-intro-content">
+        <svg
+          className="signature-svg"
+          viewBox="0 0 760 260"
+          role="img"
+          aria-label="Ardian handwritten signature"
+        >
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M86 176 C111 124 134 82 158 68 C174 59 190 70 197 93 C209 130 193 170 169 177 C145 184 125 166 135 144 C144 124 174 121 209 140"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M224 176 C231 144 244 124 258 123 C272 122 276 136 264 148 C256 155 243 160 238 176 C254 144 278 125 302 128"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M350 134 C330 121 306 132 302 154 C298 177 321 186 340 170 C358 154 355 129 334 128 C365 135 374 156 369 176 C362 131 372 86 398 67"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M430 128 C415 151 416 176 434 176 C448 176 460 157 467 141"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-dot"
+            d="M443 95 C448 89 456 92 455 99 C454 106 444 107 441 102 C439 99 440 97 443 95"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M522 130 C495 117 472 130 469 154 C465 177 491 186 509 168 C526 151 526 127 508 130 C538 130 549 149 547 176"
+          />
+          <path
+            data-signature-path
+            className="signature-path signature-path-main"
+            d="M566 176 C580 137 603 118 625 127 C649 140 622 176 649 176 C674 176 689 146 707 126"
+          />
+          <path
+            data-signature-underline
+            className="signature-path signature-path-underline"
+            d="M116 204 C258 221 466 217 686 198"
+          />
+          <circle className="intro-pen-tip" cx="66" cy="176" r="4" />
+        </svg>
 
-      {/* GRID */}
-      <div className="ardian-intro-grid" aria-hidden="true" />
-
-      {/* ORANGE GLOW */}
-      <div className="ardian-intro-glow" aria-hidden="true" />
-
-      {/* CONTENT */}
-      <div className="ardian-intro-content">
-        <p className="ardian-intro-label">Muhammad Ardian Maulana</p>
-
-        <h1 className="ardian-intro-title">
-          {WORDS.map((word, index) => (
-            <span key={`${word}-${index}`} className="ardian-word-mask">
-              <span
-                className="ardian-word"
-                style={{
-                  animationDelay: `${500 + index * 130}ms`,
-                }}
-              >
-                {word}
-              </span>
-            </span>
-          ))}
-        </h1>
-
-        <span className="ardian-intro-line" aria-hidden="true" />
+        <div className="opening-intro-label intro-reveal-item">
+          ARDN. / PORTFOLIO
+        </div>
+        <p className="opening-intro-caption intro-reveal-item">
+          DESIGNED &amp; DEVELOPED WITH PURPOSE
+        </p>
       </div>
 
-      <style jsx>{`
-        .portfolio-opening-root {
-          position: fixed;
-          inset: 0;
-          z-index: 999999;
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          width: 100vw;
-          height: 100dvh;
-
-          overflow: hidden;
-
-          color: #f7f1e3;
-
-          pointer-events: auto;
-        }
-
-        /* ============================
-           PANEL
-        ============================ */
-
-        .intro-panel {
-          position: absolute;
-          top: 0;
-          bottom: 0;
-
-          z-index: 0;
-
-          width: 50%;
-
-          background: #0d0d0f;
-
-          transition: transform 1000ms cubic-bezier(0.76, 0, 0.24, 1);
-        }
-
-        .intro-panel-left {
-          left: 0;
-        }
-
-        .intro-panel-right {
-          right: 0;
-        }
-
-        .is-leaving .intro-panel-left {
-          transform: translateX(-100%);
-        }
-
-        .is-leaving .intro-panel-right {
-          transform: translateX(100%);
-        }
-
-        /* ============================
-           GRID
-        ============================ */
-
-        .ardian-intro-grid {
-          position: absolute;
-          inset: 0;
-
-          z-index: 1;
-
-          pointer-events: none;
-
-          opacity: 0.18;
-
-          background-image:
-            linear-gradient(rgba(247, 241, 227, 0.06) 1px, transparent 1px),
-            linear-gradient(
-              90deg,
-              rgba(247, 241, 227, 0.06) 1px,
-              transparent 1px
-            );
-
-          background-size: 72px 72px;
-
-          mask-image: radial-gradient(circle at center, black, transparent 78%);
-
-          transition: opacity 400ms ease;
-        }
-
-        .is-leaving .ardian-intro-grid {
-          opacity: 0;
-        }
-
-        /* ============================
-           GLOW
-        ============================ */
-
-        .ardian-intro-glow {
-          position: absolute;
-
-          left: 50%;
-          top: 50%;
-
-          z-index: 1;
-
-          width: 440px;
-          height: 440px;
-
-          border-radius: 50%;
-
-          background: radial-gradient(
-            circle,
-            rgba(249, 115, 22, 0.24) 0%,
-            rgba(249, 115, 22, 0.08) 38%,
-            transparent 70%
-          );
-
-          filter: blur(46px);
-
-          transform: translate(-50%, -50%) scale(1);
-
-          animation: introGlowBreath 3.5s ease-in-out infinite;
-
-          transition: opacity 450ms ease;
-        }
-
-        .is-leaving .ardian-intro-glow {
-          opacity: 0;
-        }
-
-        /* ============================
-           CONTENT
-        ============================ */
-
-        .ardian-intro-content {
-          position: relative;
-
-          z-index: 3;
-
-          display: flex;
-
-          width: min(100%, 1100px);
-
-          flex-direction: column;
-          align-items: center;
-
-          padding: 24px;
-
-          text-align: center;
-
-          transition:
-            opacity 380ms ease,
-            transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
-            filter 380ms ease;
-        }
-
-        .is-leaving .ardian-intro-content {
-          opacity: 0;
-
-          filter: blur(8px);
-
-          transform: translateY(-12px) scale(0.97);
-        }
-
-        /* ============================
-           NAME
-        ============================ */
-
-        .ardian-intro-label {
-          margin: 0 0 24px;
-
-          color: rgba(247, 241, 227, 0.48);
-
-          font-size: 10px;
-          font-weight: 900;
-
-          line-height: 1.4;
-
-          letter-spacing: 0.3em;
-
-          text-transform: uppercase;
-
-          opacity: 0;
-
-          animation: introNameReveal 800ms cubic-bezier(0.16, 1, 0.3, 1) 180ms
-            forwards;
-        }
-
-        /* ============================
-           TITLE
-        ============================ */
-
-        .ardian-intro-title {
-          display: flex;
-
-          flex-wrap: wrap;
-          justify-content: center;
-
-          max-width: 1000px;
-
-          margin: 0;
-
-          color: #f7f1e3;
-
-          font-family: inherit;
-
-          font-size: clamp(2rem, 5vw, 4.9rem);
-
-          font-weight: 400;
-
-          line-height: 1.13;
-
-          letter-spacing: -0.055em;
-
-          text-align: center;
-        }
-
-        .ardian-word-mask {
-          display: inline-block;
-
-          overflow: hidden;
-
-          padding: 0 0.08em 0.1em;
-        }
-
-        .ardian-word {
-          display: inline-block;
-
-          opacity: 0;
-
-          transform: translateY(110%);
-
-          animation: introWordReveal 850ms cubic-bezier(0.16, 1, 0.3, 1)
-            forwards;
-        }
-
-        /* ============================
-           ORANGE LINE
-        ============================ */
-
-        .ardian-intro-line {
-          display: block;
-
-          width: 2px;
-          height: 48px;
-
-          margin: 30px auto 0;
-
-          border-radius: 999px;
-
-          background: linear-gradient(
-            to bottom,
-            rgba(249, 115, 22, 0.1),
-            #f97316,
-            rgba(249, 115, 22, 0.1)
-          );
-
-          box-shadow: 0 0 18px rgba(249, 115, 22, 0.4);
-
-          opacity: 0;
-
-          transform: scaleY(0);
-
-          transform-origin: top center;
-
-          animation: introLineReveal 750ms cubic-bezier(0.16, 1, 0.3, 1) 1350ms
-            forwards;
-        }
-
-        /* ============================
-           ANIMATIONS
-        ============================ */
-
-        @keyframes introNameReveal {
-          from {
-            opacity: 0;
-
-            filter: blur(8px);
-
-            transform: translateY(12px);
-          }
-
-          to {
-            opacity: 1;
-
-            filter: blur(0);
-
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes introWordReveal {
-          from {
-            opacity: 0;
-
-            transform: translateY(110%);
-          }
-
-          to {
-            opacity: 1;
-
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes introLineReveal {
-          from {
-            opacity: 0;
-
-            transform: scaleY(0);
-          }
-
-          to {
-            opacity: 1;
-
-            transform: scaleY(1);
-          }
-        }
-
-        @keyframes introGlowBreath {
-          0%,
-          100% {
-            opacity: 0.55;
-
-            transform: translate(-50%, -50%) scale(0.95);
-          }
-
-          50% {
-            opacity: 1;
-
-            transform: translate(-50%, -50%) scale(1.12);
-          }
-        }
-
-        /* ============================
-           MOBILE
-        ============================ */
-
-        @media (max-width: 640px) {
-          .ardian-intro-glow {
-            width: 300px;
-            height: 300px;
-          }
-
-          .ardian-intro-label {
-            margin-bottom: 16px;
-
-            font-size: 8px;
-
-            letter-spacing: 0.22em;
-          }
-
-          .ardian-intro-title {
-            max-width: 350px;
-
-            font-size: clamp(1.75rem, 8.7vw, 2.65rem);
-
-            line-height: 1.18;
-
-            letter-spacing: -0.04em;
-          }
-
-          .ardian-intro-line {
-            height: 38px;
-
-            margin-top: 22px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .intro-panel,
-          .ardian-intro-grid,
-          .ardian-intro-glow,
-          .ardian-intro-content,
-          .ardian-intro-label,
-          .ardian-word,
-          .ardian-intro-line {
-            animation-duration: 1ms !important;
-
-            animation-iteration-count: 1 !important;
-
-            transition-duration: 1ms !important;
-          }
-        }
-      `}</style>
+      <button
+        type="button"
+        className="opening-intro-skip"
+        onClick={() => closeIntroRef.current(true)}
+      >
+        SKIP INTRO
+      </button>
     </div>
   );
 }
+
+export { INTRO_SESSION_KEY };
