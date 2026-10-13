@@ -253,6 +253,42 @@ const MOBILE_MENU_ITEMS: NavItem[] = [
   { href: "#contact", label: "Contact" },
 ];
 
+function ScriptInitial({
+  letter,
+  colorClassName = "",
+}: {
+  letter: "M" | "A";
+  colorClassName?: string;
+}) {
+  return (
+    <span
+      className={`script-initial ${colorClassName}`}
+      data-script-initial={letter}
+      aria-hidden="true"
+    >
+      <span className="script-initial-glyph">{letter}</span>
+      <span className="script-initial-pen" />
+    </span>
+  );
+}
+
+function AnimatedNameLine({
+  initial,
+  rest,
+  isOrange = false,
+}: {
+  initial: "M" | "A";
+  rest: string;
+  isOrange?: boolean;
+}) {
+  return (
+    <span className={`hero-name-line ${isOrange ? "hero-name-orange" : ""}`}>
+      <ScriptInitial letter={initial} />
+      <span className="hero-name-rest">{rest}</span>
+    </span>
+  );
+}
+
 function SplitText({ text }: { text: string }) {
   const words = text.split(" ");
 
@@ -614,9 +650,7 @@ function AllProjectsHorizontal({
         return {
           maxX,
           snapPoints:
-            maxX > 0
-              ? uniqueSnapOffsets.map((offset) => offset / maxX)
-              : [0],
+            maxX > 0 ? uniqueSnapOffsets.map((offset) => offset / maxX) : [0],
           snapOffsets: uniqueSnapOffsets,
         };
       };
@@ -630,19 +664,23 @@ function AllProjectsHorizontal({
         }
 
         const viewportCenter = sticky.clientWidth / 2;
-        const closestIndex = cards.reduce((closest, card, index) => {
-          const cardCenter = card.offsetLeft - xOffset + card.offsetWidth / 2;
-          const distance = Math.abs(cardCenter - viewportCenter);
+        const closestIndex = cards.reduce(
+          (closest, card, index) => {
+            const cardCenter = card.offsetLeft - xOffset + card.offsetWidth / 2;
+            const distance = Math.abs(cardCenter - viewportCenter);
 
-          return distance < closest.distance ? { index, distance } : closest;
-        }, { index: 0, distance: Number.POSITIVE_INFINITY }).index;
+            return distance < closest.distance ? { index, distance } : closest;
+          },
+          { index: 0, distance: Number.POSITIVE_INFINITY },
+        ).index;
 
         setActiveIndex(closestIndex);
       };
 
       const refreshState = () => {
         const { maxX } = buildMetrics();
-        const shouldPin = projects.length > 1 && maxX > 8 && !mediaQuery.matches;
+        const shouldPin =
+          projects.length > 1 && maxX > 8 && !mediaQuery.matches;
 
         setCanPin(shouldPin);
 
@@ -901,7 +939,9 @@ export default function HomePage() {
 
     const hero = document.querySelector<HTMLElement>(".hero-section");
     const glow = document.querySelector<HTMLElement>(".hero-ambient-glow");
-    const background = document.querySelector<HTMLElement>(".portfolio-opening-bg");
+    const background = document.querySelector<HTMLElement>(
+      ".portfolio-opening-bg",
+    );
     const sideNavItems = document.querySelectorAll<HTMLElement>(
       ".side-nav a, .side-contact",
     );
@@ -929,13 +969,25 @@ export default function HomePage() {
       ).matches;
       const ctx = gsap.context(() => {
         const nameLines = gsap.utils.toArray<HTMLElement>(".hero-name-line");
+        const nameRests = gsap.utils.toArray<HTMLElement>(".hero-name-rest");
+        const scriptInitials = gsap.utils.toArray<HTMLElement>(
+          ".hero-title .script-initial",
+        );
+        const scriptPens = gsap.utils.toArray<HTMLElement>(
+          ".hero-title .script-initial-pen",
+        );
         const secondaryItems = gsap.utils.toArray<HTMLElement>(
           ".hero-location, .hero-topline, .hero-bottom",
         );
         const profile = document.querySelector<HTMLElement>(".hero-profile");
-        const profileRing = document.querySelector<HTMLElement>(".profile-ring");
-        const profileCards =
-          gsap.utils.toArray<HTMLElement>(".hero-profile .profile-card");
+        const profileImage = document.querySelector<HTMLElement>(
+          ".profile-ring .profile-img",
+        );
+        const profileRing =
+          document.querySelector<HTMLElement>(".profile-ring");
+        const profileCards = gsap.utils.toArray<HTMLElement>(
+          ".hero-profile .profile-card",
+        );
 
         if (reduceMotion.matches) {
           gsap.set(
@@ -944,33 +996,65 @@ export default function HomePage() {
               glow,
               sideNavItems,
               nameLines,
+              nameRests,
+              scriptInitials,
+              scriptPens,
               secondaryItems,
               profile,
+              profileImage,
               profileCards,
               profileRing,
             ],
             { clearProps: "all" },
           );
-          gsap.set([nameLines, secondaryItems, profile, profileCards], {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            filter: "none",
-          });
+          gsap.set(
+            [
+              nameLines,
+              nameRests,
+              secondaryItems,
+              profile,
+              profileImage,
+              profileCards,
+            ],
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              filter: "none",
+              "--script-reveal": 100,
+            },
+          );
+          gsap.set(scriptPens, { opacity: 0 });
           gsap.set(profileRing, { "--orbit-opacity": 0.55 });
           return;
         }
 
         gsap.set(glow, { opacity: 0, x: 0, y: 0 });
         gsap.set(sideNavItems, { opacity: 0, x: -12 });
-        gsap.set(nameLines, { opacity: 0, y: 56 });
+        gsap.set(nameLines, { opacity: 1, y: 0 });
+        gsap.set(nameRests, { opacity: 0, y: 18 });
+        gsap.set(scriptInitials, {
+          opacity: 1,
+          "--script-reveal": 0,
+          "--script-shine": 0,
+        });
+        gsap.set(scriptPens, {
+          opacity: 0,
+          left: "8%",
+          top: "62%",
+          xPercent: 0,
+        });
         gsap.set(secondaryItems, { opacity: 0, y: 14 });
         gsap.set(profile, {
           opacity: 0,
-          scale: 0.92,
+          scale: 1,
           y: 18,
-          filter: "blur(10px)",
           clipPath: "circle(34% at 50% 50%)",
+        });
+        gsap.set(profileImage, {
+          opacity: 0,
+          scale: 1.05,
+          filter: "blur(15px)",
         });
         gsap.set(profileRing, { "--orbit-opacity": 0 });
         gsap.set(profileCards, { opacity: 0, y: 16, scale: 0.96 });
@@ -978,9 +1062,21 @@ export default function HomePage() {
         const intro = gsap.timeline({
           defaults: { ease: "power3.out" },
           onComplete: () => {
-            gsap.set([nameLines, secondaryItems, profile, profileCards], {
-              clearProps: "willChange",
-            });
+            gsap.set(
+              [
+                nameLines,
+                nameRests,
+                scriptInitials,
+                secondaryItems,
+                profile,
+                profileImage,
+                profileCards,
+              ],
+              {
+                clearProps: "willChange",
+              },
+            );
+            gsap.set(profileImage, { filter: "blur(0px)" });
           },
         });
 
@@ -993,21 +1089,109 @@ export default function HomePage() {
             0.15,
           )
           .to(
-            nameLines,
-            { opacity: 1, y: 0, duration: 0.86, stagger: 0.16 },
-            0.3,
+            scriptInitials[0],
+            {
+              "--script-reveal": 100,
+              "--script-shine": 1,
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            0.2,
           )
+          .to(
+            scriptPens[0],
+            {
+              opacity: 1,
+              left: "83%",
+              top: "36%",
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            "<",
+          )
+          .to(
+            scriptInitials[0],
+            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
+            ">-0.1",
+          )
+          .to(scriptPens[0], { opacity: 0, duration: 0.16 }, ">-0.12")
+          .to(nameRests[0], { opacity: 1, y: 0, duration: 0.42 }, 0.62)
+          .to(
+            scriptInitials[1],
+            {
+              "--script-reveal": 100,
+              "--script-shine": 1,
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            0.62,
+          )
+          .to(
+            scriptPens[1],
+            {
+              opacity: 1,
+              left: "82%",
+              top: "34%",
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            "<",
+          )
+          .to(
+            scriptInitials[1],
+            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
+            ">-0.1",
+          )
+          .to(scriptPens[1], { opacity: 0, duration: 0.16 }, ">-0.12")
+          .to(nameRests[1], { opacity: 1, y: 0, duration: 0.42 }, 1.02)
+          .to(
+            scriptInitials[2],
+            {
+              "--script-reveal": 100,
+              "--script-shine": 1,
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            1.08,
+          )
+          .to(
+            scriptPens[2],
+            {
+              opacity: 1,
+              left: "83%",
+              top: "36%",
+              duration: 0.78,
+              ease: "sine.inOut",
+            },
+            "<",
+          )
+          .to(
+            scriptInitials[2],
+            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
+            ">-0.1",
+          )
+          .to(scriptPens[2], { opacity: 0, duration: 0.16 }, ">-0.12")
+          .to(nameRests[2], { opacity: 1, y: 0, duration: 0.42 }, 1.48)
           .to(
             profile,
             {
               opacity: 1,
-              scale: 1,
               y: 0,
-              filter: "blur(0px)",
               clipPath: "circle(76% at 50% 50%)",
-              duration: 0.82,
+              duration: 0.9,
             },
             0.65,
+          )
+          .to(
+            profileImage,
+            {
+              opacity: 1,
+              scale: 1,
+              filter: "blur(0px)",
+              duration: 1.1,
+              ease: "power3.out",
+            },
+            0.68,
           )
           .to(
             profileRing,
@@ -1044,10 +1228,8 @@ export default function HomePage() {
 
           const handlePointerMove = (event: PointerEvent) => {
             const rect = hero.getBoundingClientRect();
-            const normalizedX =
-              (event.clientX - rect.left) / rect.width - 0.5;
-            const normalizedY =
-              (event.clientY - rect.top) / rect.height - 0.5;
+            const normalizedX = (event.clientX - rect.left) / rect.width - 0.5;
+            const normalizedY = (event.clientY - rect.top) / rect.height - 0.5;
 
             moveGlowX(normalizedX * 76);
             moveGlowY(normalizedY * 62);
@@ -1098,12 +1280,20 @@ export default function HomePage() {
         exitTimeline
           .to(
             ".hero-copy-reveal",
-            { y: () => (window.innerWidth < 768 ? -28 : -62), opacity: 0.55, ease: "none" },
+            {
+              y: () => (window.innerWidth < 768 ? -28 : -62),
+              opacity: 0.55,
+              ease: "none",
+            },
             0,
           )
           .to(
             ".hero-profile",
-            { y: () => (window.innerWidth < 768 ? 18 : 44), opacity: 0.78, ease: "none" },
+            {
+              y: () => (window.innerWidth < 768 ? 18 : 44),
+              opacity: 0.78,
+              ease: "none",
+            },
             0,
           )
           .to(
@@ -1117,7 +1307,10 @@ export default function HomePage() {
 
         window.addEventListener("lenis-scroll", handleLenisScroll);
 
-        const refreshTimer = window.setTimeout(() => ScrollTrigger.refresh(), 80);
+        const refreshTimer = window.setTimeout(
+          () => ScrollTrigger.refresh(),
+          80,
+        );
 
         cleanup = ((previousCleanup) => () => {
           previousCleanup();
@@ -1334,19 +1527,17 @@ export default function HomePage() {
               <p className="hero-location">
                 Based in Indonesia • Available Worldwide
               </p>
-              <h1 className="hero-title">
+              <h1 className="hero-title" aria-label="Muhammad Ardian Maulana">
                 <span className="hero-name-mask">
-                  <span className="hero-name-line hero-name-1">Muhammad</span>
+                  <AnimatedNameLine initial="M" rest="uhammad" />
                 </span>
 
                 <span className="hero-name-mask">
-                  <span className="hero-name-line hero-name-2 hero-name-orange">
-                    Ardian
-                  </span>
+                  <AnimatedNameLine initial="A" rest="rdian" isOrange />
                 </span>
 
                 <span className="hero-name-mask">
-                  <span className="hero-name-line hero-name-3">Maulana</span>
+                  <AnimatedNameLine initial="M" rest="aulana" />
                 </span>
               </h1>
             </div>

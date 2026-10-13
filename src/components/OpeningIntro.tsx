@@ -91,63 +91,53 @@ export default function OpeningIntro({
         "(prefers-reduced-motion: reduce)",
       ).matches;
 
-      const signaturePaths = Array.from(
-        root.querySelectorAll<SVGPathElement>("[data-signature-path]"),
-      );
-      const underline = root.querySelector<SVGPathElement>(
-        "[data-signature-underline]",
-      );
-      const penTip = root.querySelector<SVGCircleElement>(".intro-pen-tip");
-
-      const preparePath = (path: SVGPathElement) => {
-        const length = path.getTotalLength();
-
-        path.style.strokeDasharray = `${length}`;
-        path.style.strokeDashoffset = `${length}`;
-
-        return length;
-      };
-
-      const pathLengths = signaturePaths.map(preparePath);
-      const underlineLength = underline ? preparePath(underline) : 0;
-
-      const setPenPosition = (path: SVGPathElement, progress: number) => {
-        if (!penTip) return;
-
-        const point = path.getPointAtLength(
-          path.getTotalLength() * Math.min(Math.max(progress, 0), 1),
-        );
-
-        gsap.set(penTip, {
-          attr: {
-            cx: point.x,
-            cy: point.y,
-          },
-        });
-      };
+      const signatureInitial =
+        root.querySelector<HTMLElement>(".intro-script-initial");
+      const wordRest = root.querySelector<HTMLElement>(".intro-word-rest");
+      const penTip = root.querySelector<HTMLElement>(".intro-pen-tip");
+      const underline = root.querySelector<HTMLElement>(".signature-underline");
 
       if (reduceMotion) {
-        gsap.set([...signaturePaths, underline].filter(Boolean), {
-          strokeDashoffset: 0,
+        gsap.set([signatureInitial, wordRest, underline].filter(Boolean), {
+          opacity: 1,
+          "--script-reveal": 100,
+          scaleX: 1,
+          x: 0,
+          y: 0,
         });
         gsap.set(root.querySelectorAll(".intro-reveal-item"), {
           opacity: 1,
           y: 0,
         });
+        gsap.set(penTip, { opacity: 0 });
         window.setTimeout(() => finishIntro(false), 520);
         return;
       }
 
       const ctx = gsap.context(() => {
-        gsap.set(root.querySelector(".signature-svg"), {
+        gsap.set(signatureInitial, {
           opacity: 1,
+          "--script-reveal": 0,
+          "--script-shine": 0,
         });
         gsap.set(root.querySelectorAll(".intro-reveal-item"), {
           opacity: 0,
           y: 12,
         });
+        gsap.set(wordRest, {
+          opacity: 0,
+          x: -10,
+        });
         gsap.set(penTip, {
           opacity: 0,
+          left: "8%",
+          top: "60%",
+          xPercent: 0,
+        });
+        gsap.set(underline, {
+          opacity: 1,
+          scaleX: 0,
+          transformOrigin: "50% 50%",
         });
 
         const timeline = gsap.timeline({
@@ -175,71 +165,59 @@ export default function OpeningIntro({
             0.18,
           );
 
-        const totalSignatureLength = pathLengths.reduce(
-          (total, length) => total + length,
-          0,
+        timeline
+          .to(penTip, { opacity: 1, duration: 0.12 }, 0.38)
+          .to(
+            signatureInitial,
+            {
+              "--script-reveal": 100,
+              "--script-shine": 1,
+              duration: 0.98,
+              ease: "sine.inOut",
+            },
+            0.42,
+          )
+          .to(
+            penTip,
+            {
+              left: "82%",
+              top: "34%",
+              duration: 0.98,
+              ease: "sine.inOut",
+            },
+            "<",
+          );
+        timeline.to(
+          signatureInitial,
+          {
+            "--script-shine": 0,
+            duration: 0.22,
+            ease: "power1.out",
+          },
+          ">-0.08",
         );
 
-        signaturePaths.forEach((path, index) => {
-          const proxy = { progress: 0 };
-          const duration = Math.max(
-            0.2,
-            (pathLengths[index] / totalSignatureLength) * 2.12,
-          );
-
-          timeline
-            .to(
-              penTip,
-              { opacity: 1, duration: 0.12 },
-              index === 0 ? 0.38 : ">-0.02",
-            )
-            .to(
-              path,
-              {
-                strokeDashoffset: 0,
-                duration,
-                ease: "sine.inOut",
-              },
-              index === 0 ? 0.42 : ">-0.03",
-            )
-            .to(
-              proxy,
-              {
-                progress: 1,
-                duration,
-                ease: "sine.inOut",
-                onStart: () => setPenPosition(path, 0),
-                onUpdate: () => setPenPosition(path, proxy.progress),
-              },
-              `<`,
-            );
-        });
+        timeline.to(
+          wordRest,
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.52,
+            ease: "power2.out",
+          },
+          1.12,
+        );
 
         if (underline) {
-          const underlineProxy = { progress: 0 };
-
-          timeline
-            .to(
-              underline,
-              {
-                strokeDashoffset: 0,
-                duration: 0.48,
-                ease: "power1.inOut",
-              },
-              ">-0.08",
-            )
-            .to(
-              underlineProxy,
-              {
-                progress: 1,
-                duration: 0.48,
-                ease: "power1.inOut",
-                onStart: () => underline && setPenPosition(underline, 0),
-                onUpdate: () =>
-                  underline && setPenPosition(underline, underlineProxy.progress),
-              },
-              "<",
-            );
+          timeline.to(
+            underline,
+            {
+              scaleX: 1,
+              duration: 0.44,
+              ease: "power1.inOut",
+            },
+            ">-0.08",
+          );
         }
 
         timeline
@@ -256,7 +234,7 @@ export default function OpeningIntro({
             ">-0.02",
           )
           .to(
-            root.querySelector(".signature-svg"),
+            root.querySelector(".intro-signature-wordmark"),
             {
               scale: 0.985,
               duration: 0.58,
@@ -272,13 +250,6 @@ export default function OpeningIntro({
 
       cleanupGsap = () => ctx.revert();
 
-      pathLengths.forEach((length, index) => {
-        signaturePaths[index].style.strokeDasharray = `${length}`;
-      });
-
-      if (underline && underlineLength) {
-        underline.style.strokeDasharray = `${underlineLength}`;
-      }
     };
 
     setupIntro();
@@ -312,54 +283,18 @@ export default function OpeningIntro({
       <div className="opening-intro-orbit" aria-hidden="true" />
 
       <div className="opening-intro-content">
-        <svg
-          className="signature-svg"
-          viewBox="0 0 760 260"
-          role="img"
-          aria-label="Ardian handwritten signature"
-        >
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M86 176 C111 124 134 82 158 68 C174 59 190 70 197 93 C209 130 193 170 169 177 C145 184 125 166 135 144 C144 124 174 121 209 140"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M224 176 C231 144 244 124 258 123 C272 122 276 136 264 148 C256 155 243 160 238 176 C254 144 278 125 302 128"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M350 134 C330 121 306 132 302 154 C298 177 321 186 340 170 C358 154 355 129 334 128 C365 135 374 156 369 176 C362 131 372 86 398 67"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M430 128 C415 151 416 176 434 176 C448 176 460 157 467 141"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-dot"
-            d="M443 95 C448 89 456 92 455 99 C454 106 444 107 441 102 C439 99 440 97 443 95"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M522 130 C495 117 472 130 469 154 C465 177 491 186 509 168 C526 151 526 127 508 130 C538 130 549 149 547 176"
-          />
-          <path
-            data-signature-path
-            className="signature-path signature-path-main"
-            d="M566 176 C580 137 603 118 625 127 C649 140 622 176 649 176 C674 176 689 146 707 126"
-          />
-          <path
-            data-signature-underline
-            className="signature-path signature-path-underline"
-            d="M116 204 C258 221 466 217 686 198"
-          />
-          <circle className="intro-pen-tip" cx="66" cy="176" r="4" />
-        </svg>
+        <div className="intro-signature-wordmark" aria-label="Ardian">
+          <span
+            className="intro-script-initial"
+            data-script-initial="A"
+            aria-hidden="true"
+          >
+            A
+          </span>
+          <span className="intro-pen-tip" aria-hidden="true" />
+          <span className="intro-word-rest">rdian</span>
+          <span className="signature-underline" aria-hidden="true" />
+        </div>
 
         <div className="opening-intro-label intro-reveal-item">
           ARDN. / PORTFOLIO
