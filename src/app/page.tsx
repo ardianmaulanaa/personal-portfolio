@@ -253,6 +253,29 @@ const MOBILE_MENU_ITEMS: NavItem[] = [
   { href: "#contact", label: "Contact" },
 ];
 
+const SCRIPT_INITIAL_PATHS: Record<"M" | "A", string[]> = {
+  M: [
+    "M25 135 C36 88 54 47 76 33 C91 24 101 36 98 60 C95 88 82 117 67 137",
+    "M68 137 C88 92 111 51 134 36 C150 26 161 38 157 62 C153 89 140 117 124 137",
+    "M124 137 C147 104 170 90 192 98 C207 104 211 119 198 130 C182 143 154 137 129 118",
+  ],
+  A: [
+    "M31 132 C51 84 80 42 111 30 C132 22 146 39 142 67 C137 104 107 134 77 136 C54 138 45 123 58 106 C73 87 107 88 140 108",
+    "M96 94 C120 87 146 88 168 97",
+    "M144 109 C158 122 176 127 194 121",
+  ],
+};
+
+const SCRIPT_INITIAL_VIEWBOX: Record<"M" | "A", string> = {
+  M: "10 14 216 144",
+  A: "18 14 194 132",
+};
+
+const SCRIPT_INITIAL_GLYPH: Record<"M" | "A", { x: number; y: number }> = {
+  M: { x: 12, y: 142 },
+  A: { x: 20, y: 142 },
+};
+
 function ScriptInitial({
   letter,
   colorClassName = "",
@@ -266,8 +289,29 @@ function ScriptInitial({
       data-script-initial={letter}
       aria-hidden="true"
     >
-      <span className="script-initial-glyph">{letter}</span>
-      <span className="script-initial-pen" />
+      <svg
+        className="script-initial-svg"
+        viewBox={SCRIPT_INITIAL_VIEWBOX[letter]}
+        preserveAspectRatio="xMinYMid meet"
+        focusable="false"
+        aria-hidden="true"
+        data-script-initial={letter}
+      >
+        <text
+          className="script-initial-glyph"
+          x={SCRIPT_INITIAL_GLYPH[letter].x}
+          y={SCRIPT_INITIAL_GLYPH[letter].y}
+        >
+          {letter}
+        </text>
+        {SCRIPT_INITIAL_PATHS[letter].map((path, index) => (
+          <path
+            key={`${letter}-${index}`}
+            className="hero-script-path"
+            d={path}
+          />
+        ))}
+      </svg>
     </span>
   );
 }
@@ -394,32 +438,28 @@ function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
-    const moveCursor = (e: MouseEvent) => {
-      setPosition({
-        x: e.clientX,
-        y: e.clientY,
-      });
+    // Event delegation also covers project cards added after filtering.
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      setPosition({ x: event.clientX, y: event.clientY });
+      const target = event.target;
+      setIsHovering(
+        target instanceof Element &&
+          Boolean(target.closest("a, button, [role='button']")),
+      );
+    };
+    const handleWindowLeave = () => {
+      setPosition(null);
+      setIsHovering(false);
     };
 
-    const hoverTargets = document.querySelectorAll("a, button, .nav-dots");
-
-    const handleMouseEnter = () => setIsHovering(true);
-    const handleMouseLeave = () => setIsHovering(false);
-
-    window.addEventListener("mousemove", moveCursor);
-
-    hoverTargets.forEach((target) => {
-      target.addEventListener("mouseenter", handleMouseEnter);
-      target.addEventListener("mouseleave", handleMouseLeave);
+    window.addEventListener("pointermove", handlePointerMove, {
+      passive: true,
     });
-
+    document.addEventListener("pointerleave", handleWindowLeave);
     return () => {
-      window.removeEventListener("mousemove", moveCursor);
-
-      hoverTargets.forEach((target) => {
-        target.removeEventListener("mouseenter", handleMouseEnter);
-        target.removeEventListener("mouseleave", handleMouseLeave);
-      });
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerleave", handleWindowLeave);
     };
   }, []);
 
@@ -427,14 +467,15 @@ function CustomCursor() {
     <>
       <div
         className="cursor-dot"
+        aria-hidden="true"
         style={{
           left: position ? `${position.x}px` : "-999px",
           top: position ? `${position.y}px` : "-999px",
         }}
       />
-
       <div
         className={`cursor-circle ${isHovering ? "is-hovering" : ""}`}
+        aria-hidden="true"
         style={{
           left: position ? `${position.x}px` : "-999px",
           top: position ? `${position.y}px` : "-999px",
@@ -449,65 +490,58 @@ function CountUp({
   duration = 1500,
   decimals = 0,
   suffix = "",
+  active = true,
 }: {
   target: number;
   duration?: number;
   decimals?: number;
   suffix?: string;
+  active?: boolean;
 }) {
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
+    if (!active || !ref.current) return;
     const element = ref.current;
-
-    if (!element) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasStarted) {
+        if (entry.isIntersecting) {
           setHasStarted(true);
           observer.disconnect();
         }
       },
-      {
-        threshold: 0.4,
-      },
+      { threshold: 0.4 },
     );
-
     observer.observe(element);
-
     return () => observer.disconnect();
-  }, [hasStarted]);
+  }, [active]);
 
   useEffect(() => {
-    if (!hasStarted) return;
+    if (!active || !hasStarted) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (reduceMotion || duration <= 0) {
+      // Avoid unneeded frame loops for people who prefer reduced motion.
+      const done = window.requestAnimationFrame(() => setCount(target));
+      return () => window.cancelAnimationFrame(done);
+    }
 
     let startTime: number | null = null;
-
+    let animationFrame = 0;
     const animate = (currentTime: number) => {
-      if (startTime === null) {
-        startTime = currentTime;
-      }
-
-      const elapsed = currentTime - startTime;
-
-      const progress = Math.min(elapsed / duration, 1);
-
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-
-      const currentValue = target * easeOut;
-
-      setCount(currentValue);
-
+      if (startTime === null) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      setCount(target * (1 - Math.pow(1 - progress, 3)));
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        animationFrame = window.requestAnimationFrame(animate);
       }
     };
-
-    requestAnimationFrame(animate);
-  }, [hasStarted, target, duration]);
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [active, hasStarted, target, duration]);
 
   return (
     <strong ref={ref}>
@@ -880,6 +914,7 @@ export default function HomePage() {
   const [openingProjectHref, setOpeningProjectHref] = useState<string | null>(
     null,
   );
+  const projectNavigationTimerRef = useRef<number | null>(null);
 
   const filteredProjects = useMemo(() => {
     if (activeProjectCategory === "All") {
@@ -891,15 +926,36 @@ export default function HomePage() {
     );
   }, [activeProjectCategory]);
 
+  useEffect(() => {
+    if (!menuOpen || !pageReady || showIntro) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [menuOpen, pageReady, showIntro]);
+
+  useEffect(() => {
+    return () => {
+      if (projectNavigationTimerRef.current !== null) {
+        window.clearTimeout(projectNavigationTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleProjectOpen = useCallback(
     (href: string) => (event: ReactMouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
-
-      if (openingProjectHref) return;
-
+      if (openingProjectHref || projectNavigationTimerRef.current !== null)
+        return;
       setOpeningProjectHref(href);
-
-      window.setTimeout(() => {
+      projectNavigationTimerRef.current = window.setTimeout(() => {
+        projectNavigationTimerRef.current = null;
         router.push(href);
       }, 620);
     },
@@ -952,6 +1008,9 @@ export default function HomePage() {
     let cleanup = () => {};
 
     const setupHeroMotion = async () => {
+      // Heading widths and GSAP trigger positions depend on font metrics.
+      await document.fonts?.ready;
+      if (isCancelled) return;
       const [{ gsap }, { ScrollTrigger }] = await Promise.all([
         import("gsap"),
         import("gsap/ScrollTrigger"),
@@ -970,12 +1029,11 @@ export default function HomePage() {
       const ctx = gsap.context(() => {
         const nameLines = gsap.utils.toArray<HTMLElement>(".hero-name-line");
         const nameRests = gsap.utils.toArray<HTMLElement>(".hero-name-rest");
-        const scriptInitials = gsap.utils.toArray<HTMLElement>(
-          ".hero-title .script-initial",
+        const scriptSvgs = gsap.utils.toArray<SVGSVGElement>(
+          ".script-initial-svg",
         );
-        const scriptPens = gsap.utils.toArray<HTMLElement>(
-          ".hero-title .script-initial-pen",
-        );
+        const scriptPaths =
+          gsap.utils.toArray<SVGPathElement>(".hero-script-path");
         const secondaryItems = gsap.utils.toArray<HTMLElement>(
           ".hero-location, .hero-topline, .hero-bottom",
         );
@@ -989,6 +1047,13 @@ export default function HomePage() {
           ".hero-profile .profile-card",
         );
 
+        scriptPaths.forEach((path) => {
+          const length = path.getTotalLength();
+
+          path.style.strokeDasharray = `${length}`;
+          path.style.strokeDashoffset = `${length}`;
+        });
+
         if (reduceMotion.matches) {
           gsap.set(
             [
@@ -997,8 +1062,8 @@ export default function HomePage() {
               sideNavItems,
               nameLines,
               nameRests,
-              scriptInitials,
-              scriptPens,
+              scriptSvgs,
+              scriptPaths,
               secondaryItems,
               profile,
               profileImage,
@@ -1021,10 +1086,10 @@ export default function HomePage() {
               y: 0,
               scale: 1,
               filter: "none",
-              "--script-reveal": 100,
             },
           );
-          gsap.set(scriptPens, { opacity: 0 });
+          gsap.set(scriptSvgs, { opacity: 1 });
+          gsap.set(scriptPaths, { strokeDashoffset: 0, opacity: 0 });
           gsap.set(profileRing, { "--orbit-opacity": 0.55 });
           return;
         }
@@ -1033,16 +1098,10 @@ export default function HomePage() {
         gsap.set(sideNavItems, { opacity: 0, x: -12 });
         gsap.set(nameLines, { opacity: 1, y: 0 });
         gsap.set(nameRests, { opacity: 0, y: 18 });
-        gsap.set(scriptInitials, {
-          opacity: 1,
-          "--script-reveal": 0,
-          "--script-shine": 0,
-        });
-        gsap.set(scriptPens, {
-          opacity: 0,
-          left: "8%",
-          top: "62%",
-          xPercent: 0,
+        gsap.set(scriptSvgs, { opacity: 1 });
+        gsap.set(scriptPaths, {
+          opacity: 0.72,
+          strokeDashoffset: (_, path) => path.getTotalLength(),
         });
         gsap.set(secondaryItems, { opacity: 0, y: 14 });
         gsap.set(profile, {
@@ -1066,7 +1125,6 @@ export default function HomePage() {
               [
                 nameLines,
                 nameRests,
-                scriptInitials,
                 secondaryItems,
                 profile,
                 profileImage,
@@ -1089,89 +1147,41 @@ export default function HomePage() {
             0.15,
           )
           .to(
-            scriptInitials[0],
+            scriptPaths.slice(0, 3),
             {
-              "--script-reveal": 100,
-              "--script-shine": 1,
-              duration: 0.78,
-              ease: "sine.inOut",
+              strokeDashoffset: 0,
+              duration: 1.28,
+              stagger: 0.06,
+              ease: "power2.inOut",
             },
             0.2,
           )
+          .to(scriptPaths.slice(0, 3), { opacity: 0, duration: 0.32 }, 1.5)
+          .to(nameRests[0], { opacity: 1, y: 0, duration: 0.8 }, 1.52)
           .to(
-            scriptPens[0],
+            scriptPaths.slice(3, 6),
             {
-              opacity: 1,
-              left: "83%",
-              top: "36%",
-              duration: 0.78,
-              ease: "sine.inOut",
+              strokeDashoffset: 0,
+              duration: 1.24,
+              stagger: 0.06,
+              ease: "power2.inOut",
             },
-            "<",
+            0.95,
           )
+          .to(scriptPaths.slice(3, 6), { opacity: 0, duration: 0.32 }, 2.2)
+          .to(nameRests[1], { opacity: 1, y: 0, duration: 0.8 }, 2.22)
           .to(
-            scriptInitials[0],
-            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
-            ">-0.1",
-          )
-          .to(scriptPens[0], { opacity: 0, duration: 0.16 }, ">-0.12")
-          .to(nameRests[0], { opacity: 1, y: 0, duration: 0.42 }, 0.62)
-          .to(
-            scriptInitials[1],
+            scriptPaths.slice(6),
             {
-              "--script-reveal": 100,
-              "--script-shine": 1,
-              duration: 0.78,
-              ease: "sine.inOut",
+              strokeDashoffset: 0,
+              duration: 1.28,
+              stagger: 0.06,
+              ease: "power2.inOut",
             },
-            0.62,
+            1.7,
           )
-          .to(
-            scriptPens[1],
-            {
-              opacity: 1,
-              left: "82%",
-              top: "34%",
-              duration: 0.78,
-              ease: "sine.inOut",
-            },
-            "<",
-          )
-          .to(
-            scriptInitials[1],
-            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
-            ">-0.1",
-          )
-          .to(scriptPens[1], { opacity: 0, duration: 0.16 }, ">-0.12")
-          .to(nameRests[1], { opacity: 1, y: 0, duration: 0.42 }, 1.02)
-          .to(
-            scriptInitials[2],
-            {
-              "--script-reveal": 100,
-              "--script-shine": 1,
-              duration: 0.78,
-              ease: "sine.inOut",
-            },
-            1.08,
-          )
-          .to(
-            scriptPens[2],
-            {
-              opacity: 1,
-              left: "83%",
-              top: "36%",
-              duration: 0.78,
-              ease: "sine.inOut",
-            },
-            "<",
-          )
-          .to(
-            scriptInitials[2],
-            { "--script-shine": 0, duration: 0.18, ease: "power1.out" },
-            ">-0.1",
-          )
-          .to(scriptPens[2], { opacity: 0, duration: 0.16 }, ">-0.12")
-          .to(nameRests[2], { opacity: 1, y: 0, duration: 0.42 }, 1.48)
+          .to(scriptPaths.slice(6), { opacity: 0, duration: 0.32 }, 3)
+          .to(nameRests[2], { opacity: 1, y: 0, duration: 0.8 }, 3.02)
           .to(
             profile,
             {
@@ -1335,6 +1345,25 @@ export default function HomePage() {
   }, [pageReady]);
 
   useEffect(() => {
+    // Wait until the intro leaves and scrolling is unlocked before measuring pins.
+    if (!pageReady || showIntro) return;
+    let cancelled = false;
+    let frame = 0;
+    const refreshTriggers = async () => {
+      await document.fonts?.ready;
+      if (cancelled) return;
+      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+      if (cancelled) return;
+      frame = window.requestAnimationFrame(() => ScrollTrigger.refresh());
+    };
+    void refreshTriggers();
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [pageReady, showIntro, activeProjectCategory]);
+
+  useEffect(() => {
     if (!pageReady) return;
 
     const sections = NAV_ITEMS.map((item) =>
@@ -1365,12 +1394,17 @@ export default function HomePage() {
   }, [pageReady]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveExperienceImage((prev) => (prev + 1) % 3);
+    if (!pageReady) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const interval = window.setInterval(() => {
+      if (!document.hidden) {
+        setActiveExperienceImage((prev) => (prev + 1) % 3);
+      }
     }, 3000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => window.clearInterval(interval);
+  }, [pageReady]);
 
   useEffect(() => {
     if (!pageReady) return;
@@ -1401,16 +1435,21 @@ export default function HomePage() {
   return (
     <main
       className={`portfolio-page relative min-h-screen bg-[#0d0d0f] text-[#f7f1e3] lg:pl-[96px] ${
-        pageReady ? "portfolio-page-ready has-custom-cursor" : ""
-      }`}
+        pageReady ? "portfolio-page-ready" : ""
+      } ${pageReady && !showIntro ? "has-custom-cursor" : ""}`}
     >
       {introChecked && showIntro ? (
         <OpeningIntro
-          onRevealStart={() => setPageReady(true)}
-          onComplete={() => setShowIntro(false)}
+          onRevealStart={() => {
+            // Reveal hero beneath the sliding intro so there is no blank frame.
+            setPageReady(true);
+          }}
+          onComplete={() => {
+            setShowIntro(false);
+          }}
         />
       ) : null}
-      {pageReady ? <CustomCursor /> : null}
+      {pageReady && !showIntro ? <CustomCursor /> : null}
       <AnimatedBackground isReady={pageReady} />
       <div
         className={`project-transition-overlay ${
@@ -1466,7 +1505,11 @@ export default function HomePage() {
         <button
           type="button"
           className={`nav-dots ${menuOpen ? "is-active" : ""}`}
-          aria-label="Toggle navigation menu"
+          aria-label={
+            menuOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+          aria-controls="portfolio-mobile-menu"
+          aria-expanded={menuOpen}
           onClick={() => setMenuOpen((prev) => !prev)}
         >
           <span></span>
@@ -1483,7 +1526,11 @@ export default function HomePage() {
         </a>
       </nav>
 
-      <div className={`fullscreen-menu ${menuOpen ? "is-open" : ""}`}>
+      <div
+        id="portfolio-mobile-menu"
+        className={`fullscreen-menu ${menuOpen ? "is-open" : ""}`}
+        aria-hidden={!menuOpen}
+      >
         <div className="fullscreen-menu-top">
           <span>LOCAL / INDONESIA</span>
           <span>PORTFOLIO MENU</span>
@@ -1494,6 +1541,7 @@ export default function HomePage() {
             <a
               key={item.href}
               href={item.href}
+              tabIndex={menuOpen ? 0 : -1}
               onClick={() => setMenuOpen(false)}
             >
               {item.label}
@@ -1523,25 +1571,7 @@ export default function HomePage() {
           </div>
 
           <div className="hero-grid">
-            <div className="hero-copy-reveal">
-              <p className="hero-location">
-                Based in Indonesia • Available Worldwide
-              </p>
-              <h1 className="hero-title" aria-label="Muhammad Ardian Maulana">
-                <span className="hero-name-mask">
-                  <AnimatedNameLine initial="M" rest="uhammad" />
-                </span>
-
-                <span className="hero-name-mask">
-                  <AnimatedNameLine initial="A" rest="rdian" isOrange />
-                </span>
-
-                <span className="hero-name-mask">
-                  <AnimatedNameLine initial="M" rest="aulana" />
-                </span>
-              </h1>
-            </div>
-
+            {/* Portrait first: centered, smaller, and above the name. */}
             <div className="hero-profile scroll-fade">
               <div className="profile-glow" />
               <div className="profile-ring">
@@ -1565,6 +1595,25 @@ export default function HomePage() {
                 <b>FullStack • DevOps • AI • Cyber</b>
               </div>
             </div>
+
+            <div className="hero-copy-reveal">
+              <p className="hero-location">
+                Based in Indonesia • Available Worldwide
+              </p>
+              <h1 className="hero-title" aria-label="Muhammad Ardian Maulana">
+                <span className="hero-name-mask">
+                  <AnimatedNameLine initial="M" rest="uhammad" />
+                </span>
+
+                <span className="hero-name-mask">
+                  <AnimatedNameLine initial="A" rest="rdian" isOrange />
+                </span>
+
+                <span className="hero-name-mask">
+                  <AnimatedNameLine initial="M" rest="aulana" />
+                </span>
+              </h1>
+            </div>
           </div>
 
           <div className="hero-bottom scroll-fade">
@@ -1584,6 +1633,7 @@ export default function HomePage() {
               <article key={item.label} className="approach-stat-card">
                 <CountUp
                   target={item.value}
+                  active={pageReady}
                   duration={item.duration}
                   decimals={item.decimals}
                   suffix={item.suffix}
@@ -1611,6 +1661,7 @@ export default function HomePage() {
                   activeProjectCategory === category ? "is-active" : ""
                 }`}
                 onClick={() => setActiveProjectCategory(category)}
+                aria-pressed={activeProjectCategory === category}
               >
                 <ProjectCategoryIcon category={category} />
 

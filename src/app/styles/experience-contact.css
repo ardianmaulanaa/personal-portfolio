@@ -1,0 +1,162 @@
+/* experience-contact.css — extracted from the original global.css. Import order matters. */
+.experience-row {
+  display: grid;
+  grid-template-columns: 0.8fr 180px 1fr;
+  gap: 28px;
+  padding: 34px 0;
+  border-top: 1px solid var(--line-dark);
+}
+
+.experience-row:last-child {
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.experience-row h3 {
+  font-family: var(--font-editorial-stack);
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.experience-row span,
+.experience-row time {
+  display: block;
+  margin-top: 8px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.contact-section {
+  position: relative;
+  z-index: 2;
+  padding: 100px 22px;
+  background: var(--dark);
+}
+
+.contact-card {
+  max-width: 1180px;
+  margin: 0 auto;
+  border: 1px solid rgba(247, 241, 227, 0.16);
+  border-radius: 44px;
+  padding: clamp(32px, 6vw, 72px);
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(249, 115, 22, 0.22),
+      transparent 38%
+    ),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: 0 40px 110px rgba(0, 0, 0, 0.38);
+}
+
+.contact-card > span {
+  display: block;
+  margin-bottom: 28px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contact-card h2 {
+  max-width: 980px;
+  font-family: var(--font-editorial-stack);
+  font-size: clamp(3rem, 7.2vw, 7.4rem);
+  font-weight: 300;
+  line-height: 0.94;
+  letter-spacing: 0;
+  overflow-wrap: normal;
+}
+
+.contact-card .split-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
+.contact-card p {
+  max-width: 640px;
+  margin-top: 28px;
+}
+
+.contact-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.contact-card a {
+  background: var(--cream);
+  color: var(--dark);
+}
+
+.site-footer {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid rgba(247, 241, 227, 0.12);
+  padding: 28px 22px;
+  background: var(--dark);
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.scroll-fade,
+.project-row,
+.service-row,
+.education-card,
+.certificate-card,
+.experience-row,
+.stat-card {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease;
+}
+
+.scroll-fade.is-visible,
+.project-row.is-visible,
+.service-row.is-visible,
+.education-card.is-visible,
+.certificate-card.is-visible,
+.experience-row.is-visible,
+.stat-card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.project-row:nth-child(2),
+.service-row:nth-child(2),
+.education-card:nth-child(2),
+.certificate-card:nth-child(2),
+.experience-row:nth-child(2),
+.stat-card:nth-child(2) {
+  transition-delay: 0.12s;
+}
+
+.project-row:nth-child(3),
+.service-row:nth-child(3),
+.certificate-card:nth-child(3),
+.experience-row:nth-child(3),
+.stat-card:nth-child(3) {
+  transition-delay: 0.24s;
+}
+
+.stat-card:nth-child(4),
+.service-row:nth-child(4) {
+  transition-delay: 0.36s;
+}
+
+.service-row:nth-child(5) {
+  transition-delay: 0.48s;
+}
+
+.service-row:nth-child(6) {
+  transition-delay: 0.6s;
+}

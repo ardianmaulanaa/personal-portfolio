@@ -1,0 +1,141 @@
+/* base.css — extracted from the original global.css. Import order matters. */
+:root {
+  --dark: #0b0b0d;
+  --dark-soft: #151518;
+  --surface: #19191d;
+  --cream: #f6f1e9;
+  --muted: #a9a19d;
+  --orange: #ff7417;
+  --orange-soft: #e96812;
+  --graphite: #1c1b1c;
+  --dark-brown: #241711;
+  --warm-brown: #321d13;
+  --line-dark: rgba(246, 241, 233, 0.12);
+  --line-light: rgba(246, 241, 233, 0.14);
+  --bg-line: rgba(255, 255, 255, 0.032);
+  --bg-line-soft: rgba(255, 255, 255, 0.016);
+  --font-script-stack: "Ballet", cursive;
+  --font-serif-stack: "Cormorant Garamond", serif;
+  --font-editorial-stack: var(--font-serif-stack);
+  --font-interface-stack: var(--font-interface), Manrope, Arial, sans-serif;
+  --font-mono-stack:
+    var(--font-mono), "DM Mono", "SFMono-Regular", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--dark);
+}
+
+body {
+  min-height: 100%;
+  background: var(--dark);
+  color: var(--cream);
+  font-family: var(--font-interface-stack);
+  font-weight: 400;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: var(--dark);
+}
+
+body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--orange);
+}
+
+img {
+  max-width: 100%;
+}
+
+.bg-cream {
+  background: var(--cream);
+}
+
+.bg-dark {
+  background: var(--dark);
+}
+
+.bg-orange {
+  background: #ff9f45;
+}
+
+.text-dark {
+  color: var(--dark);
+}
+
+.text-cream {
+  color: var(--cream);
+}
+
+.split-text {
+  display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.split-word {
+  display: inline-flex;
+  margin-right: 0.18em;
+  white-space: nowrap;
+}
+
+.split-word:last-child {
+  margin-right: 0;
+}
+
+.split-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(36px) rotateX(70deg);
+}
+
+.scroll-fade.is-visible .split-char {
+  animation: charReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes charReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+
+.noise-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0.12;
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.35) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 88%);
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.grid-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 74px 74px;
+}

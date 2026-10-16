@@ -1,0 +1,333 @@
+/* about-education.css — extracted from the original global.css. Import order matters. */
+.about-grid {
+  display: grid;
+  max-width: 1180px;
+  align-items: center;
+  gap: 40px;
+  margin: 0 auto;
+}
+
+.about-copy h3 {
+  margin-bottom: 26px;
+  font-family: var(--font-editorial-stack);
+  font-size: clamp(2.2rem, 5vw, 5.5rem);
+  font-weight: 300;
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.about-copy a,
+.contact-card a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 24px;
+  border-radius: 999px;
+  padding: 15px 22px;
+  background: var(--dark);
+  color: var(--cream);
+  font-weight: 600;
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+.about-copy a:hover,
+.contact-card a:hover {
+  transform: translateY(-4px);
+  background: var(--orange);
+  color: var(--dark);
+}
+
+.about-image {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  border-radius: 42px;
+  background: var(--dark);
+}
+
+.about-image div {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  border-radius: 28px;
+  padding: 20px;
+  background: rgba(13, 13, 15, 0.72);
+  color: var(--cream);
+  backdrop-filter: blur(14px);
+}
+
+.about-image span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.about-image b {
+  font-family: var(--font-editorial-stack);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.service-row {
+  display: grid;
+  grid-template-columns: 54px 0.9fr 1.1fr;
+  align-items: center;
+  gap: 22px;
+  padding: 30px 0;
+  border-top: 1px solid var(--line-dark);
+}
+
+.service-row:last-child {
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.service-row span {
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+}
+
+.service-row h3 {
+  font-family: var(--font-editorial-stack);
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* ================= EDUCATION & CERTIFICATES ================= */
+
+.education-section {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 15% 18%,
+      rgba(249, 115, 22, 0.16),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 86% 72%,
+      rgba(255, 255, 255, 0.09),
+      transparent 30%
+    ),
+    #101012;
+}
+
+.education-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 130px 130px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.education-layout {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  max-width: 1180px;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 34px;
+  margin: 0 auto;
+}
+
+.education-column {
+  min-width: 0;
+}
+
+.education-label {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid rgba(247, 241, 227, 0.16);
+  padding-bottom: 18px;
+}
+
+.education-label span {
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.education-label p {
+  max-width: 360px;
+  margin: 0;
+  color: rgba(247, 241, 227, 0.66);
+  line-height: 1.6;
+  text-align: right;
+}
+
+.education-list,
+.certificate-list {
+  display: grid;
+  gap: 18px;
+}
+
+.education-card,
+.certificate-card {
+  border: 1px solid rgba(247, 241, 227, 0.16);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.24);
+}
+
+.education-card {
+  min-height: 330px;
+  padding: 28px;
+}
+
+.education-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 56px;
+}
+
+.education-card-top span,
+.education-card-top small,
+.certificate-card > span {
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.education-card h3,
+.certificate-card h3 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.8rem, 3vw, 3.1rem);
+  font-weight: 950;
+  line-height: 0.96;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.education-card h4,
+.certificate-card h4 {
+  margin: 12px 0 14px;
+  color: rgba(247, 241, 227, 0.72);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.education-card p,
+.certificate-card p {
+  margin: 0;
+  color: rgba(247, 241, 227, 0.68);
+  line-height: 1.7;
+}
+
+.education-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.education-tags span {
+  border: 1px solid rgba(247, 241, 227, 0.18);
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: rgba(247, 241, 227, 0.82);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.certificate-card {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 22px;
+  padding: 26px;
+  transition: 0.35s ease;
+}
+
+.education-card:hover,
+.certificate-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(249, 115, 22, 0.55);
+  background: rgba(249, 115, 22, 0.105);
+}
+
+.skill-strip {
+  position: relative;
+  z-index: 3;
+  contain: paint;
+  max-width: 100%;
+  overflow: hidden;
+  border-top: 1px solid rgba(247, 241, 227, 0.14);
+  border-bottom: 1px solid rgba(247, 241, 227, 0.14);
+  background: var(--dark);
+  padding: 22px 0;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 18px;
+  animation: marqueeLeft 26s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.marquee-track span {
+  border: 1px solid rgba(247, 241, 227, 0.18);
+  border-radius: 999px;
+  padding: 12px 20px;
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.stat-card {
+  border: 1px solid var(--line-light);
+  border-radius: 34px;
+  padding: 34px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stat-card strong {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--orange);
+  font-size: clamp(3rem, 7vw, 7rem);
+  font-weight: 950;
+  line-height: 0.85;
+  letter-spacing: -0.08em;
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
