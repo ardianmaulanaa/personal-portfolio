@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Ardian monogram</title>
+  <rect width="512" height="512" rx="112" fill="#0A0F0D"/>
+  <path d="M92 366 210 112h62L390 366h-72l-24-58H184l-24 58H92Zm116-116h62l-31-78-31 78Z" fill="#E2E8E4"/>
+  <path d="M278 112h64v254h-64z" fill="#34D399" opacity=".92"/>
+</svg>

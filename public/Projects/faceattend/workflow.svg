@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">FaceAttend feature illustration</title><desc id="desc">Original editorial graphic presenting attendance workflow features.</desc>
+  <rect width="1600" height="1000" fill="#e5ebe7"/><text x="100" y="150" fill="#102019" font-family="Arial,sans-serif" font-size="70" font-weight="800">Attendance, made accountable.</text>
+  <g font-family="Arial,sans-serif"><g fill="#102019"><rect x="100" y="250" width="430" height="550" rx="34"/><rect x="585" y="250" width="430" height="550" rx="34"/><rect x="1070" y="250" width="430" height="550" rx="34"/></g><g fill="#34d399" font-size="82" font-weight="800"><text x="150" y="380">GPS</text><text x="635" y="380">PHOTO</text><text x="1120" y="380">REPORT</text></g><g fill="#d8e3dc" font-size="28"><text x="150" y="480">Location-aware</text><text x="150" y="520">check-in/out</text><text x="635" y="480">Evidence at the</text><text x="635" y="520">point of attendance</text><text x="1120" y="480">History and admin</text><text x="1120" y="520">monitoring</text></g></g>
+</svg>

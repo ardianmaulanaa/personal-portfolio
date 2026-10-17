@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Muhammad Ardian Maulana — Portfolio
 
-## Getting Started
+Personal portfolio for Muhammad Ardian Maulana, an Informatics Engineering student at Telkom University focused on backend engineering, artificial intelligence, and practical software development.
 
-First, run the development server:
+The site is built with Next.js 15, React 19, TypeScript, GSAP, ScrollTrigger, Lenis, and Tailwind CSS. It preserves the expressive motion system and editorial direction of the upstream project while replacing the public identity, biography, projects, contact details, and media with Ardian's verified information.
+
+## Highlights
+
+- Animated hero typography and global preloader
+- Smooth scrolling with Lenis and GSAP ScrollTrigger
+- Curved full-screen navigation and custom cursor
+- Responsive project showcase with dynamic case-study routes
+- Interactive canvas backgrounds and scroll-driven reveals
+- Contact form with Resend/Gmail support and an honest local-development fallback
+- Reduced-motion support
+
+## Projects
+
+- SIMUKPBJ — procurement monitoring system
+- FaceAttend — employee attendance system
+- GreenMarket — marketplace web application
+- E-Tilang — wrong-way vehicle detection prototype
+
+Project descriptions and external links are based on Ardian's CV, local source code, and public GitHub repositories. Institutional records and unsupported performance claims are intentionally excluded.
+
+## Development
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Production verification:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-## Learn More
+## Optional environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Copy `.env.example` to `.env.local` only when needed.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXT_PUBLIC_SITE_URL` — deployed canonical URL; defaults to `http://localhost:3000`
+- `NEXT_PUBLIC_GA_ID` — optional Google Analytics ID
+- `RESEND_API_KEY` — optional Resend delivery key
+- `GMAIL_APP_PASSWORD` — optional Gmail App Password
+- `CONTACT_EMAIL` — optional recipient override; defaults to Ardian's email from `src/lib/site.ts`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Without mail credentials in development, messages are saved to the local ignored `messages.txt` file and the UI explicitly states that no email was delivered.
 
-## Deploy on Vercel
+## Attribution and license
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project is based on the open-source [Aitezaz Portfolio](https://github.com/aitezazdev/Portfolio) by Aitezaz Sikandar and retains its original MIT license and copyright notice in `LICENSE`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Personalization and portfolio content represent Muhammad Ardian Maulana. Upstream attribution is not personal branding and is intentionally preserved.
