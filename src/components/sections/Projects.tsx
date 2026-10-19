@@ -17,7 +17,7 @@ export default function Projects() {
 
   return (
     <section ref={root} id="projects" className="case-section">
-      <div className="section-index"><span>03</span> SELECTED SYSTEMS</div>
+      <div className="section-index"><span>02</span> SELECTED SYSTEMS</div>
       <div className="case-heading">
         <h2>Work built for<br/><em>the real world.</em></h2>
         <p>Selected software systems spanning public-sector workflows, employee operations, commerce, and computer vision.</p>

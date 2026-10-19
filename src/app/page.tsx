@@ -9,6 +9,8 @@
 
 import HomeBanner from '@/components/sections/HomeBanner';
 import Projects from '@/components/sections/Projects';
+import Services from '@/components/sections/Services';
+import TechStack from '@/components/sections/TechStack';
 import ExperienceTimeline from '@/components/sections/ExperienceTimeline';
 import About from '@/components/sections/About';
 import Contact from '@/components/sections/Contact';
@@ -27,6 +29,8 @@ export default function Home() {
         <section className="relative z-20 bg-cream">
           <Projects />
         </section>
+        <Services />
+        <TechStack />
         <ExperienceTimeline />
         <div className="relative z-25 bg-ink overflow-hidden">
           <Contact />
