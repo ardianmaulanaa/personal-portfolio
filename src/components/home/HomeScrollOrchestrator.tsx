@@ -66,6 +66,14 @@ export default function HomeScrollOrchestrator({
       });
 
       const updatePointerEvents = (self: ScrollTrigger) => {
+        // A scrubbed animation deliberately eases toward the scroll position.
+        // At the absolute top, however, the hero must be in its exact resting
+        // state immediately (especially after a fast jump from deep in-page).
+        if (self.progress === 0) {
+          self.getTween()?.progress(1);
+          self.animation?.progress(0);
+        }
+
         if (self.progress >= 0.85) {
           home.style.pointerEvents = "none";
           window.dispatchEvent(new CustomEvent("pause-ambient-geometry"));

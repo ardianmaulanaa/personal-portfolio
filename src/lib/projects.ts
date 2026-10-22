@@ -60,11 +60,8 @@ const projects: Project[] = [
       "Implemented role-aware access, validation, dashboard views, and REST API integration.",
       "Supported containerized deployment using Docker and Nginx.",
     ],
-    images: [
-      "/Projects/simukpbj/SIMUKPBJ-COVER-4.png",
-      "/Projects/simukpbj/1.png",
-    ],
-    hoverImage: "/Projects/simukpbj/SIMUKPBJ-COVER-4.png",
+    images: [],
+    hoverImage: "/Projects/simukpbj/SIMUKPBJ-COVER-UTAMA.png",
     github:
       "https://github.com/ardianmaulanaa/monitoring_ukpbj_dinas_kesehatan",
     liveUrl: "https://www.simukpbj.my.id/",
@@ -104,10 +101,7 @@ const projects: Project[] = [
       "Integrated application data and APIs across employee and administrator interfaces.",
       "Supported debugging, testing, feature refinement, and deployment preparation.",
     ],
-    images: [
-      "/Projects/faceattend/creativemu-cover.png",
-      "/Projects/faceattend/workflow.svg",
-    ],
+    images: [],
     hoverImage: "/Projects/faceattend/creativemu-cover.png",
     github:
       "https://github.com/ardianmaulanaa/Presensi-Web-Based-Employee-Creativemu",
@@ -147,11 +141,7 @@ const projects: Project[] = [
       "Designed and integrated relational data using PostgreSQL and Prisma.",
       "Added validation and error handling around core marketplace requests.",
     ],
-    images: [
-      "/Projects/greenmarket/GM-COVER.png",
-      "/Projects/greenmarket/2.png",
-      "/Projects/greenmarket/3.png",
-    ],
+    images: [],
     hoverImage: "/Projects/greenmarket/GM-COVER.png",
     github: "https://github.com/ardianmaulanaa/GreenMarket-Website",
     liveUrl: "",
@@ -190,12 +180,46 @@ const projects: Project[] = [
       "Implemented OpenCV video processing and centroid-based vehicle tracking.",
       "Connected movement history to configurable wrong-way direction rules and visual output.",
     ],
-    images: [
-      "/Projects/etilang/promo.png",
-      "/Projects/etilang/validation.jpg",
-      "/Projects/etilang/results.png",
-      "/Projects/etilang/confusion-matrix.png",
+    images: [],
+    hoverImage: "/Projects/etilang/promo.png",
+    github: "https://github.com/ardianmaulanaa/ComputerVision-Etilang-One-Way",
+    liveUrl: "",
+  },
+  {
+    id: 4,
+    slug: "EchoMarket",
+    title: "E-Tilang: Wrong-Way Detection",
+    type: "Computer Vision Prototype",
+    role: "System Analyst",
+    tech: [
+      "Python",
+      "YOLOv8",
+      "OpenCV",
+      "Roboflow",
+      "NumPy",
+      "Computer Vision",
     ],
+    description:
+      "A computer vision prototype that detects and tracks vehicles moving against a configured one-way traffic direction.",
+    overview:
+      "E-Tilang explores automated wrong-way traffic detection from image and video streams. The prototype combines a trained object detector with vehicle tracking and directional logic so that movement can be evaluated against a configured traffic lane.",
+    architecture:
+      "YOLOv8 provides vehicle detections, OpenCV handles video frames and visualization, and centroid-based tracking associates detections across frames. A configurable virtual line and movement history are used to identify vehicles whose direction conflicts with the expected lane flow.",
+    implementation:
+      "The project covered dataset preparation and annotation, model training, validation, object detection, video processing, centroid tracking, and result visualization. Training artifacts are presented as recorded outputs rather than converted into unsupported performance claims.",
+    stats: [
+      { value: "YOLOv8", label: "Object detection" },
+      { value: "OpenCV", label: "Video pipeline" },
+      { value: "Tracking", label: "Direction analysis" },
+    ],
+    accent: "#183455",
+    myRole: [
+      "Prepared and annotated vehicle data for object-detection experiments.",
+      "Trained and validated a YOLOv8 detector using the project dataset.",
+      "Implemented OpenCV video processing and centroid-based vehicle tracking.",
+      "Connected movement history to configurable wrong-way direction rules and visual output.",
+    ],
+    images: [],
     hoverImage: "/Projects/etilang/promo.png",
     github: "https://github.com/ardianmaulanaa/ComputerVision-Etilang-One-Way",
     liveUrl: "",

@@ -24,18 +24,38 @@ export default function HomeBanner() {
   const root = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
 
-  useGSAP(() => {
+  useGSAP((_, contextSafe) => {
     if (reduced) return;
-    const ctx = gsap.context(() => {
-      gsap.set('.hero-reveal', { yPercent: 115 });
-      gsap.set('.hero-fade', { y: 24, opacity: 0 });
-      const play = () => gsap.timeline({ defaults: { ease: 'power4.out' } })
-        .to('.hero-reveal', { yPercent: 0, duration: 1.05, stagger: 0.1 })
-        .to('.hero-fade', { y: 0, opacity: 1, duration: 0.65, stagger: 0.09 }, '-=.6');
-      if (window.__preloaderDone) play();
-      else window.addEventListener('preloaderComplete', play, { once: true });
-    }, root);
-    return () => ctx.revert();
+
+    gsap.set('.hero-reveal', { yPercent: 115 });
+    gsap.set('.hero-fade', { y: 24, opacity: 0 });
+
+    // The preloader can finish after this effect has mounted. Wrapping its
+    // callback in contextSafe makes the delayed timeline part of this GSAP
+    // context, so Strict Mode and route unmounts can reliably revert it.
+    const play = contextSafe!(() => {
+      gsap.timeline({ defaults: { ease: 'power4.out' } })
+        .to('.hero-reveal', {
+          yPercent: 0,
+          duration: 1.05,
+          stagger: 0.1,
+          overwrite: 'auto',
+        })
+        .to('.hero-fade', {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          stagger: 0.09,
+          overwrite: 'auto',
+        }, '-=.6');
+    });
+
+    if (window.__preloaderDone) play();
+    else window.addEventListener('preloaderComplete', play, { once: true });
+
+    return () => {
+      window.removeEventListener('preloaderComplete', play);
+    };
   }, { scope: root, dependencies: [reduced] });
 
   const scrollTo = (id: string) => {

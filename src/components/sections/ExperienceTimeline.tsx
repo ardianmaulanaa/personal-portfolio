@@ -19,6 +19,20 @@ interface ExperienceItem {
 
 const experiences: ExperienceItem[] = [
   {
+    id: "telkomsel",
+    period: "JUN—AUG 2026",
+    organization: "Telkomsel ",
+    role: "Software Development Internship",
+    category: "Internship",
+    description:
+      "Contributed to a web-based employee attendance application, working across attendance workflows, employee management interfaces, and full-stack feature delivery.",
+    technologies: ["Next.js", "TypeScript", "React"],
+    image: "/experience/creativemu",
+    imageAlt:
+      "FaceAttend attendance system interface illustration developed during the internship",
+    initials: "MKC",
+  },
+  {
     id: "creativemu",
     period: "JUN—AUG 2026",
     organization: "CV. Mulya Kreatif Cipta",
@@ -53,7 +67,7 @@ const experiences: ExperienceItem[] = [
     description:
       "Developing backend skills through API design, relational data, application logic, and practical software utilities within the division.",
     technologies: ["Backend", "REST API", "Database"],
-    image: "/experience/bigdata/COVER.WEBP",
+    image: "/experience/bigdata/COVER.jpeg",
     initials: "BIGDATA",
   },
   {
